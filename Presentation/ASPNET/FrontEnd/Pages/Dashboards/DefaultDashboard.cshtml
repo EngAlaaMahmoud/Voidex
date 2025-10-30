@@ -1,0 +1,50 @@
+﻿@page
+@{
+    ViewData["Title"] = "Default Dashboard";
+}
+
+<div id="app" v-cloak>
+    <div class="form-card" id="formcard">
+
+              <div class="container-fluid pt-4 px-4">
+            <div class="row g-4">
+                <div class="col-sm-12 col-xl-6">
+                    <div class="bg-white text-center rounded p-4">
+                        <div class="d-flex align-items-center justify-content-between mb-4">
+                            <h6 class="mb-0">Latest Sales</h6>
+                            <a href="/SalesOrders/SalesOrderList">Sales</a>
+                        </div>
+                        <div ref="salesOrderGridRef" align="center"></div>
+                    </div>
+                </div>
+                <div class="col-sm-12 col-xl-6">
+                    <div class="bg-white text-center rounded p-4">
+                        <div class="d-flex align-items-center justify-content-between mb-4">
+                            <h6 class="mb-0">Latest Purchase</h6>
+                            <a href="/PurchaseOrders/PurchaseOrderList">Purchases</a>
+                        </div>
+                        <div ref="purchaseOrderGridRef" align="center"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container-fluid pt-4 px-4">
+            <div class="row g-4 mb-4">
+                <div class="col-sm-12 col-xl-12">
+                    <div class="bg-white text-center rounded p-4">
+                        <div class="d-flex align-items-center justify-content-between mb-4">
+                            <h6 class="mb-0">Inventory Transaction</h6>
+                            <a href="/TransactionReports/TransactionReportList">Transactions</a>
+                        </div>
+                        <div ref="inventoryTransactionGridRef" align="center"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="~/FrontEnd/Pages/Dashboards/DefaultDashboard.cshtml.js"></script>
+}
