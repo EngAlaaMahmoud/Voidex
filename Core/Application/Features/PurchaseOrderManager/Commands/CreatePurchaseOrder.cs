@@ -14,17 +14,19 @@ public class CreatePurchaseOrderResult
 
 public class CreatePurchaseOrderRequest : IRequest<CreatePurchaseOrderResult>
 {
-    public string? OrderStatus { get; init; }
+    //public string? OrderStatus { get; init; }
     public string? Description { get; init; }
     public string? VendorId { get; init; }
     public string? CreatedById { get; init; }
+    public string? TaxId { get; init; }      // Withholding tax
+    public double? Discount { get; init; }   // Order-level discount
 }
 
 public class CreatePurchaseOrderValidator : AbstractValidator<CreatePurchaseOrderRequest>
 {
     public CreatePurchaseOrderValidator()
     {
-        RuleFor(x => x.OrderStatus).NotEmpty();
+        //RuleFor(x => x.OrderStatus).NotEmpty();
         RuleFor(x => x.VendorId).NotEmpty();
     }
 }
@@ -56,9 +58,11 @@ public class CreatePurchaseOrderHandler : IRequestHandler<CreatePurchaseOrderReq
 
         entity.Number = _numberSequenceService.GenerateNumber(nameof(PurchaseOrder), "", "PO");
         entity.OrderDate = DateTime.Now;
-        entity.OrderStatus = (PurchaseOrderStatus)int.Parse(request.OrderStatus!);
+        entity.OrderStatus = PurchaseOrderStatus.Confirmed;
         entity.Description = request.Description;
         entity.VendorId = request.VendorId;
+        entity.TaxId = request.TaxId;
+        entity.Discount = request.Discount ?? 0;
 
         await _repository.CreateAsync(entity, cancellationToken);
         await _unitOfWork.SaveAsync(cancellationToken);

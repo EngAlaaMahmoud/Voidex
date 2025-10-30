@@ -1,5 +1,6 @@
 ﻿using Application.Features.PurchaseOrderManager.Commands;
 using Application.Features.PurchaseOrderManager.Queries;
+using Application.Features.SalesOrderManager.Commands;
 using ASPNET.BackEnd.Common.Base;
 using ASPNET.BackEnd.Common.Models;
 using MediatR;
@@ -17,7 +18,7 @@ public class PurchaseOrderController : BaseApiController
 
     [Authorize]
     [HttpPost("CreatePurchaseOrder")]
-    public async Task<ActionResult<ApiSuccessResult<CreatePurchaseOrderResult>>> CreatePurchaseOrderAsync(CreatePurchaseOrderRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiSuccessResult<CreatePurchaseOrderResult>>> CreatePurchaseOrderAsync([FromBody] CreatePurchaseOrderRequest request, CancellationToken cancellationToken)
     {
         var response = await _sender.Send(request, cancellationToken);
 
@@ -31,7 +32,7 @@ public class PurchaseOrderController : BaseApiController
 
     [Authorize]
     [HttpPost("UpdatePurchaseOrder")]
-    public async Task<ActionResult<ApiSuccessResult<UpdatePurchaseOrderResult>>> UpdatePurchaseOrderAsync(UpdatePurchaseOrderRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<ApiSuccessResult<UpdatePurchaseOrderResult>>> UpdatePurchaseOrderAsync([FromBody] UpdatePurchaseOrderRequest request, CancellationToken cancellationToken)
     {
         var response = await _sender.Send(request, cancellationToken);
 
@@ -41,6 +42,15 @@ public class PurchaseOrderController : BaseApiController
             Message = $"Success executing {nameof(UpdatePurchaseOrderAsync)}",
             Content = response
         });
+    }
+
+
+    [Authorize]
+    [HttpPost("UpdatePurchaseOrderDiscount")]
+    public async Task<IActionResult> UpdateSalesOrderDiscount([FromBody] UpdatePurchaseOrderDiscountRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _sender.Send(request, cancellationToken);
+        return Ok(result);
     }
 
     [Authorize]

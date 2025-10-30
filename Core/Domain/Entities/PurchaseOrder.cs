@@ -13,9 +13,20 @@ public class PurchaseOrder : BaseEntity
     public Vendor? Vendor { get; set; }
     //public string? TaxId { get; set; }
     //public Tax? Tax { get; set; }
+
+    // ---- NEW: identical to SalesOrder ----
+    public string? TaxId { get; set; }          // Tax Withholding (single)
+    public Tax? Tax { get; set; }
     public double? BeforeTaxAmount { get; set; }
     public double? TaxAmount { get; set; }
     public double? AfterTaxAmount { get; set; }
+
+    public double? Discount { get; set; } = 0; // Order-level discount
+
+    // Calculated totals (same names as SalesOrder)
+    public double? VatAmount { get; set; }            // VAT only
+    public double? WithholdingAmount { get; set; }    // Tax Withholding
+    // ---------------------------------------
     public ICollection<PurchaseOrderItem> PurchaseOrderItemList { get; set; } = new List<PurchaseOrderItem>();
     public virtual ICollection<PurchaseOrderTax> PurchaseOrderTaxes { get; set; } = new List<PurchaseOrderTax>();
 

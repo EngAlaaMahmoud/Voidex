@@ -16,10 +16,12 @@ public class UpdatePurchaseOrderResult
 public class UpdatePurchaseOrderRequest : IRequest<UpdatePurchaseOrderResult>
 {
     public string? Id { get; init; }
-    public string? OrderStatus { get; init; }
+    //public string? OrderStatus { get; init; }
     public string? Description { get; init; }
     public string? VendorId { get; init; }
     public string? UpdatedById { get; init; }
+    public string? TaxId { get; init; }      // optional
+    public double? Discount { get; init; }
 }
 
 public class UpdatePurchaseOrderValidator : AbstractValidator<UpdatePurchaseOrderRequest>
@@ -27,7 +29,7 @@ public class UpdatePurchaseOrderValidator : AbstractValidator<UpdatePurchaseOrde
     public UpdatePurchaseOrderValidator()
     {
         RuleFor(x => x.Id).NotEmpty();
-        RuleFor(x => x.OrderStatus).NotEmpty();
+        //RuleFor(x => x.OrderStatus).NotEmpty();
         RuleFor(x => x.VendorId).NotEmpty();
     }
 }
@@ -37,16 +39,19 @@ public class UpdatePurchaseOrderHandler : IRequestHandler<UpdatePurchaseOrderReq
     private readonly ICommandRepository<PurchaseOrder> _repository;
     private readonly IUnitOfWork _unitOfWork;
     private readonly PurchaseOrderService _purchaseOrderService;
+    private readonly ICommandRepository<Tax> _taxRepository;
 
     public UpdatePurchaseOrderHandler(
         ICommandRepository<PurchaseOrder> repository,
         IUnitOfWork unitOfWork,
-        PurchaseOrderService purchaseOrderService
+        PurchaseOrderService purchaseOrderService,
+        ICommandRepository<Tax> taxRepository
         )
     {
         _repository = repository;
         _unitOfWork = unitOfWork;
         _purchaseOrderService = purchaseOrderService;
+        _taxRepository = taxRepository;
     }
 
     public async Task<UpdatePurchaseOrderResult> Handle(UpdatePurchaseOrderRequest request, CancellationToken cancellationToken)
@@ -57,6 +62,7 @@ public class UpdatePurchaseOrderHandler : IRequestHandler<UpdatePurchaseOrderReq
         var entity = await _repository
             .GetQuery()
             .ApplyIsDeletedFilter()
+            .Include(x => x.Tax)
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
 
         if (entity == null)
@@ -64,9 +70,24 @@ public class UpdatePurchaseOrderHandler : IRequestHandler<UpdatePurchaseOrderReq
 
         // update simple properties
         entity.UpdatedById = request.UpdatedById;
-        entity.OrderStatus = (PurchaseOrderStatus)int.Parse(request.OrderStatus!);
+        entity.OrderStatus = PurchaseOrderStatus.Confirmed;
         entity.Description = request.Description;
         entity.VendorId = request.VendorId;
+        entity.Discount = request.Discount ?? 0;
+
+        // ----- TaxId handling (same as SalesOrder) -----
+        if (string.IsNullOrEmpty(request.TaxId))
+        {
+            entity.TaxId = null;
+        }
+        else
+        {
+            var taxExists = await _taxRepository.GetQuery()
+                .AnyAsync(t => t.Id == request.TaxId, cancellationToken);
+            if (!taxExists)
+                throw new Exception($"Invalid TaxId: {request.TaxId}");
+            entity.TaxId = request.TaxId;
+        }
 
         // persist changes
         _repository.Update(entity);

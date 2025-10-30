@@ -22,6 +22,13 @@ public record GetPurchaseOrderListDto
     public double? TaxAmount { get; init; }
     public double? AfterTaxAmount { get; init; }
     public DateTime? CreatedAtUtc { get; init; }
+
+    public string? TaxId { get; init; }
+    public string? TaxName { get; init; }
+    public double? Discount { get; init; }
+
+    public double? VatAmount { get; init; }
+    public double? WithholdingAmount { get; init; }
 }
 
 public class GetPurchaseOrderListProfile : Profile
@@ -33,7 +40,9 @@ public class GetPurchaseOrderListProfile : Profile
             .ForMember(dest => dest.VendorName,
                        opt => opt.MapFrom(src => src.Vendor != null ? src.Vendor.Name : string.Empty))
             .ForMember(dest => dest.OrderStatusName,
-                       opt => opt.MapFrom(src => src.OrderStatus.HasValue ? src.OrderStatus.Value.ToFriendlyName() : string.Empty));
+                       opt => opt.MapFrom(src => src.OrderStatus.HasValue ? src.OrderStatus.Value.ToFriendlyName() : string.Empty))
+            .ForMember(dest => dest.TaxName,
+                       opt => opt.MapFrom(src => src.Tax != null ? src.Tax.Name : "None")); ;
         // other properties (numbers, dates) map by convention
     }
 }
@@ -66,6 +75,7 @@ public class GetPurchaseOrderListHandler : IRequestHandler<GetPurchaseOrderListR
             .AsNoTracking()
             .ApplyIsDeletedFilter(request.IsDeleted)
             .Include(x => x.Vendor)
+            .Include(x => x.Tax)
             .AsQueryable();
 
         var entities = await query.ToListAsync(cancellationToken);

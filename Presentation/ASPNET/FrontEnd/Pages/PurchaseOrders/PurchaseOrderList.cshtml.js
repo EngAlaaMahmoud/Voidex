@@ -4,7 +4,8 @@
             mainData: [],
             deleteMode: false,
             vendorListLookupData: [],
-            purchaseOrderStatusListLookupData: [],
+            //purchaseOrderStatusListLookupData: [], // Remove order status
+            taxListLookupData: [], // Add tax list
             secondaryData: [],
             productListLookupData: [],
             mainTitle: null,
@@ -13,18 +14,21 @@
             orderDate: '',
             description: '',
             vendorId: null,
-            orderStatus: null,
+            //orderStatus: null, // Remove order status
+            taxId: null, // Add tax
             barcode: '',
             errors: {
                 orderDate: '',
                 vendorId: '',
-                orderStatus: '',
+                //orderStatus: '', // Remove order status
                 description: ''
             },
             showComplexDiv: false,
             isSubmitting: false,
             subTotalAmount: '0.00',
-            taxAmount: '0.00',
+            vatAmount: '0.00', // Change from taxAmount to vatAmount
+            withholdingAmount: '0.00', // Add withholding
+            discount: 0, // Add discount as number
             totalAmount: '0.00'
         });
 
@@ -33,13 +37,14 @@
         const orderDateRef = Vue.ref(null);
         const numberRef = Vue.ref(null);
         const vendorIdRef = Vue.ref(null);
-        const orderStatusRef = Vue.ref(null);
+        //const orderStatusRef = Vue.ref(null); // Remove order status
         const secondaryGridRef = Vue.ref(null);
         const barcodeRef = Vue.ref(null);
+        const taxIdRef = Vue.ref(null); // Add tax reference
 
         const validateForm = function () {
             state.errors.vendorId = '';
-            state.errors.orderStatus = '';
+            //state.errors.orderStatus = ''; // Remove order status validation
 
             let isValid = true;
 
@@ -47,10 +52,10 @@
                 state.errors.vendorId = 'Vendor is required.';
                 isValid = false;
             }
-            if (!state.orderStatus) {
-                state.errors.orderStatus = 'Order status is required.';
-                isValid = false;
-            }
+            //if (!state.orderStatus) { // Remove order status validation
+            //    state.errors.orderStatus = 'Order status is required.';
+            //    isValid = false;
+            //}
 
             return isValid;
         };
@@ -61,17 +66,20 @@
             state.orderDate = '';
             state.description = '';
             state.vendorId = null;
-            state.orderStatus = null;
+            //state.orderStatus = null; // Remove order status
+            state.taxId = null; // Add tax
             state.barcode = '';
             state.errors = {
                 orderDate: '',
                 vendorId: '',
-                orderStatus: '',
+                //orderStatus: '', // Remove order status
                 description: ''
             };
             state.secondaryData = [];
             state.subTotalAmount = '0.00';
-            state.taxAmount = '0.00';
+            state.vatAmount = '0.00';
+            state.withholdingAmount = '0.00';
+            state.discount = 0;
             state.totalAmount = '0.00';
             state.showComplexDiv = false;
         };
@@ -85,20 +93,20 @@
                     throw error;
                 }
             },
-            createMainData: async (orderDate, description, orderStatus, vendorId, createdById) => {
+            createMainData: async (description, vendorId, createdById, taxId, discount) => {
                 try {
                     const response = await AxiosManager.post('/PurchaseOrder/CreatePurchaseOrder', {
-                        orderDate, description, orderStatus, vendorId, createdById
+                         description, vendorId, createdById, taxId, discount
                     });
                     return response;
                 } catch (error) {
                     throw error;
                 }
             },
-            updateMainData: async (id, orderDate, description, orderStatus, vendorId, updatedById) => {
+            updateMainData: async (id, description, vendorId, updatedById, taxId, discount) => {
                 try {
                     const response = await AxiosManager.post('/PurchaseOrder/UpdatePurchaseOrder', {
-                        id, orderDate, description, orderStatus, vendorId, updatedById
+                        id, orderDate, description, vendorId, updatedById, taxId, discount
                     });
                     return response;
                 } catch (error) {
@@ -123,9 +131,18 @@
                     throw error;
                 }
             },
-            getPurchaseOrderStatusListLookupData: async () => {
+            // Remove order status service
+            // getPurchaseOrderStatusListLookupData: async () => {
+            //     try {
+            //         const response = await AxiosManager.get('/PurchaseOrder/GetPurchaseOrderStatusList', {});
+            //         return response;
+            //     } catch (error) {
+            //         throw error;
+            //     }
+            // },
+            getTaxListLookupData: async () => { // Add tax service
                 try {
-                    const response = await AxiosManager.get('/PurchaseOrder/GetPurchaseOrderStatusList', {});
+                    const response = await AxiosManager.get('/Tax/GetTaxList', {});
                     return response;
                 } catch (error) {
                     throw error;
@@ -184,6 +201,16 @@
                 } catch (error) {
                     throw error;
                 }
+            },
+            updatePurchaseOrderDiscount: async (id, discount, updatedById) => { // Add discount update service
+                try {
+                    const response = await AxiosManager.post('/PurchaseOrder/UpdatePurchaseOrderDiscount', {
+                        id, discount, updatedById
+                    });
+                    return response;
+                } catch (error) {
+                    throw error;
+                }
             }
         };
 
@@ -192,9 +219,14 @@
                 const response = await services.getVendorListLookupData();
                 state.vendorListLookupData = response?.data?.content?.data;
             },
-            populatePurchaseOrderStatusListLookupData: async () => {
-                const response = await services.getPurchaseOrderStatusListLookupData();
-                state.purchaseOrderStatusListLookupData = response?.data?.content?.data;
+            // Remove order status population
+            // populatePurchaseOrderStatusListLookupData: async () => {
+            //     const response = await services.getPurchaseOrderStatusListLookupData();
+            //     state.purchaseOrderStatusListLookupData = response?.data?.content?.data;
+            // },
+            populateTaxListLookupData: async () => { // Add tax population
+                const response = await services.getTaxListLookupData();
+                state.taxListLookupData = response?.data?.content?.data;
             },
             populateMainData: async () => {
                 const response = await services.getMainData();
@@ -286,8 +318,63 @@
                 const record = state.mainData.find(item => item.id === id);
                 if (record) {
                     state.subTotalAmount = NumberFormatManager.formatToLocale(record.beforeTaxAmount ?? 0);
-                    state.taxAmount = NumberFormatManager.formatToLocale(record.taxAmount ?? 0);
+                    state.vatAmount = NumberFormatManager.formatToLocale(record.vatAmount ?? 0);
+                    state.withholdingAmount = NumberFormatManager.formatToLocale(record.withholdingAmount ?? 0);
+                    state.discount = NumberFormatManager.formatToLocale(record.discount ?? 0);
                     state.totalAmount = NumberFormatManager.formatToLocale(record.afterTaxAmount ?? 0);
+                }
+            },
+            updateDiscount: async () => { // Add discount update method
+                if (!state.id) return;
+
+                try {
+                    const discountValue = parseFloat(state.discount) || 0;
+                    if (discountValue < 0) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Invalid Discount',
+                            text: 'Discount cannot be negative.',
+                            confirmButtonText: 'OK'
+                        });
+                        state.discount = 0;
+                        return;
+                    }
+
+                    state.isSubmitting = true;
+
+                    const response = await services.updatePurchaseOrderDiscount(
+                        state.id,
+                        discountValue,
+                        StorageManager.getUserId()
+                    );
+
+                    if (response.status === 200) {
+                        await methods.populateMainData();
+                        await methods.refreshPaymentSummary(state.id);
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Discount Updated',
+                            timer: 1000,
+                            showConfirmButton: false
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Update Failed',
+                            text: response.data.message ?? 'Failed to update discount.',
+                            confirmButtonText: 'Try Again'
+                        });
+                    }
+                } catch (error) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'An Error Occurred',
+                        text: error.response?.data?.message ?? 'Please try again.',
+                        confirmButtonText: 'OK'
+                    });
+                } finally {
+                    state.isSubmitting = false;
                 }
             },
             handleFormSubmit: async () => {
@@ -301,10 +388,10 @@
 
                 try {
                     const response = state.id === ''
-                        ? await services.createMainData(state.orderDate, state.description, state.orderStatus, state.vendorId, StorageManager.getUserId())
+                        ? await services.createMainData( state.description, state.vendorId, StorageManager.getUserId(), state.taxId, state.discount)
                         : state.deleteMode
                             ? await services.deleteMainData(state.id, StorageManager.getUserId())
-                            : await services.updateMainData(state.id, state.orderDate, state.description, state.orderStatus, state.vendorId, StorageManager.getUserId());
+                            : await services.updateMainData(state.id, state.description, state.vendorId, StorageManager.getUserId(), state.taxId, state.discount);
 
                     if (response.data.code === 200) {
                         await methods.populateMainData();
@@ -317,8 +404,11 @@
                             state.orderDate = response?.data?.content?.data.orderDate ? new Date(response.data.content.data.orderDate) : null;
                             state.description = response?.data?.content?.data.description ?? '';
                             state.vendorId = response?.data?.content?.data.vendorId ?? '';
-                            state.orderStatus = String(response?.data?.content?.data.orderStatus ?? '');
+                            //state.orderStatus = String(response?.data?.content?.data.orderStatus ?? '');
+                            state.taxId = response?.data?.content?.data.taxId ?? null;
+                            state.discount = response?.data?.content?.data.discount ?? 0;
                             state.showComplexDiv = true;
+                            taxListLookup.trackingChange = true;
 
                             await methods.refreshPaymentSummary(state.id);
 
@@ -364,7 +454,7 @@
             onMainModalHidden: () => {
                 state.errors.orderDate = '';
                 state.errors.vendorId = '';
-                state.errors.orderStatus = '';
+                //state.errors.orderStatus = '';
             }
         };
 
@@ -401,24 +491,51 @@
             }
         };
 
-        const purchaseOrderStatusListLookup = {
+        // Remove order status lookup
+        // const purchaseOrderStatusListLookup = {
+        //     obj: null,
+        //     create: () => {
+        //         if (state.purchaseOrderStatusListLookupData && Array.isArray(state.purchaseOrderStatusListLookupData)) {
+        //             purchaseOrderStatusListLookup.obj = new ej.dropdowns.DropDownList({
+        //                 dataSource: state.purchaseOrderStatusListLookupData,
+        //                 fields: { value: 'id', text: 'name' },
+        //                 placeholder: 'Select an Order Status',
+        //                 change: (e) => {
+        //                     state.orderStatus = e.value;
+        //                 }
+        //             });
+        //             purchaseOrderStatusListLookup.obj.appendTo(orderStatusRef.value);
+        //         }
+        //     },
+        //     refresh: () => {
+        //         if (purchaseOrderStatusListLookup.obj) {
+        //             purchaseOrderStatusListLookup.obj.value = state.orderStatus;
+        //         }
+        //     }
+        // };
+
+        const taxListLookup = { // Add tax lookup
             obj: null,
+            trackingChange: false,
             create: () => {
-                if (state.purchaseOrderStatusListLookupData && Array.isArray(state.purchaseOrderStatusListLookupData)) {
-                    purchaseOrderStatusListLookup.obj = new ej.dropdowns.DropDownList({
-                        dataSource: state.purchaseOrderStatusListLookupData,
+                if (state.taxListLookupData && Array.isArray(state.taxListLookupData)) {
+                    taxListLookup.obj = new ej.dropdowns.DropDownList({
+                        dataSource: state.taxListLookupData,
                         fields: { value: 'id', text: 'name' },
-                        placeholder: 'Select an Order Status',
-                        change: (e) => {
-                            state.orderStatus = e.value;
+                        placeholder: 'Select a Tax',
+                        change: async (e) => {
+                            state.taxId = e.value;
+                            if (e.isInteracted && taxListLookup.trackingChange) {
+                                await methods.handleFormSubmit();
+                            }
                         }
                     });
-                    purchaseOrderStatusListLookup.obj.appendTo(orderStatusRef.value);
+                    taxListLookup.obj.appendTo(taxIdRef.value);
                 }
             },
             refresh: () => {
-                if (purchaseOrderStatusListLookup.obj) {
-                    purchaseOrderStatusListLookup.obj.value = state.orderStatus;
+                if (taxListLookup.obj) {
+                    taxListLookup.obj.value = state.taxId;
                 }
             }
         };
@@ -469,11 +586,19 @@
             }
         );
 
-        Vue.watch(
-            () => state.orderStatus,
+        // Remove order status watch
+        // Vue.watch(
+        //     () => state.orderStatus,
+        //     (newVal, oldVal) => {
+        //         purchaseOrderStatusListLookup.refresh();
+        //         state.errors.orderStatus = '';
+        //     }
+        // );
+
+        Vue.watch( // Add tax watch
+            () => state.taxId,
             (newVal, oldVal) => {
-                purchaseOrderStatusListLookup.refresh();
-                state.errors.orderStatus = '';
+                taxListLookup.refresh();
             }
         );
 
@@ -507,9 +632,11 @@
                         { field: 'number', headerText: 'Number', width: 150, minWidth: 150 },
                         { field: 'orderDate', headerText: 'PO Date', width: 150, format: 'yyyy-MM-dd' },
                         { field: 'vendorName', headerText: 'Vendor', width: 200, minWidth: 200 },
-                        { field: 'orderStatusName', headerText: 'Status', width: 150, minWidth: 150 },
+                        //{ field: 'orderStatusName', headerText: 'Status', width: 150, minWidth: 150 }, // Remove status
+                        { field: 'taxName', headerText: 'Tax', width: 150, minWidth: 150 }, // Add tax
                         { field: 'afterTaxAmount', headerText: 'Total Amount', width: 150, minWidth: 150, format: 'N2' },
-                        { field: 'createdAtUtc', headerText: 'Created At UTC', width: 150, format: 'yyyy-MM-dd HH:mm' }
+                        { field: 'createdAtUtc', headerText: 'Created At UTC', width: 150, format: 'yyyy-MM-dd HH:mm' },
+                        { field: 'discount', headerText: 'Discount', width: 120, minWidth: 120, format: 'N2' }, // Add discount
                     ],
                     toolbar: [
                         'ExcelExport', 'Search',
@@ -523,7 +650,7 @@
                     beforeDataBound: () => { },
                     dataBound: function () {
                         mainGrid.obj.toolbarModule.enableItems(['EditCustom', 'DeleteCustom', 'PrintPDFCustom'], false);
-                        mainGrid.obj.autoFitColumns(['number', 'orderDate', 'vendorName', 'orderStatusName', 'afterTaxAmount', 'createdAtUtc']);
+                        mainGrid.obj.autoFitColumns(['number', 'orderDate', 'vendorName', 'taxName', 'discount', 'afterTaxAmount', 'createdAtUtc']);
                     },
                     excelExportComplete: () => { },
                     rowSelected: () => {
@@ -570,8 +697,11 @@
                                 state.orderDate = selectedRecord.orderDate ? new Date(selectedRecord.orderDate) : null;
                                 state.description = selectedRecord.description ?? '';
                                 state.vendorId = selectedRecord.vendorId ?? '';
-                                state.orderStatus = String(selectedRecord.orderStatus ?? '');
+                                //state.orderStatus = String(selectedRecord.orderStatus ?? '');
+                                state.taxId = selectedRecord.taxId ?? null;
+                                state.discount = selectedRecord.discount ?? 0;
                                 state.showComplexDiv = true;
+                                taxListLookup.trackingChange = true;
 
                                 await methods.populateSecondaryData(selectedRecord.id);
                                 secondaryGrid.refresh();
@@ -590,7 +720,9 @@
                                 state.orderDate = selectedRecord.orderDate ? new Date(selectedRecord.orderDate) : null;
                                 state.description = selectedRecord.description ?? '';
                                 state.vendorId = selectedRecord.vendorId ?? '';
-                                state.orderStatus = String(selectedRecord.orderStatus ?? '');
+                                //state.orderStatus = String(selectedRecord.orderStatus ?? '');
+                                state.taxId = selectedRecord.taxId ?? null;
+                                state.discount = selectedRecord.discount ?? 0;
                                 state.showComplexDiv = false;
 
                                 await methods.populateSecondaryData(selectedRecord.id);
@@ -616,6 +748,7 @@
             }
         };
 
+        // Secondary grid remains mostly the same, but you might want to update tax calculations
         const secondaryGrid = {
             obj: null,
             create: async (dataSource) => {
@@ -1097,8 +1230,10 @@
                 mainModalRef.value?.addEventListener('hidden.bs.modal', methods.onMainModalHidden);
                 await methods.populateVendorListLookupData();
                 vendorListLookup.create();
-                await methods.populatePurchaseOrderStatusListLookupData();
-                purchaseOrderStatusListLookup.create();
+                //await methods.populatePurchaseOrderStatusListLookupData(); // Remove order status
+                //purchaseOrderStatusListLookup.create();
+                await methods.populateTaxListLookupData(); // Add tax
+                taxListLookup.create();
                 orderDatePicker.create();
                 numberText.create();
                 await methods.populateProductListLookupData();
@@ -1118,9 +1253,10 @@
             orderDateRef,
             numberRef,
             vendorIdRef,
-            orderStatusRef,
+            //orderStatusRef, // Remove order status
             secondaryGridRef,
             barcodeRef,
+            taxIdRef, // Add tax reference
             state,
             methods,
             handler: {
