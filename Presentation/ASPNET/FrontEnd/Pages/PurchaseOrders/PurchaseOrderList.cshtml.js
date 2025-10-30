@@ -17,6 +17,7 @@
             //orderStatus: null, // Remove order status
             taxId: null, // Add tax
             barcode: '',
+            discountDisplay: '٠٫٠٠', // Add this for display
             errors: {
                 orderDate: '',
                 vendorId: '',
@@ -67,7 +68,12 @@
             state.description = '';
             state.vendorId = null;
             //state.orderStatus = null; // Remove order status
-            state.taxId = null; // Add tax
+            //state.taxId = null; // Add tax
+            if (state.taxListLookupData && state.taxListLookupData.length > 0) {
+                state.taxId = state.taxListLookupData[0].id;
+            } else {
+                state.taxId = null;
+            }
             state.barcode = '';
             state.errors = {
                 orderDate: '',
@@ -106,7 +112,7 @@
             updateMainData: async (id, description, vendorId, updatedById, taxId, discount) => {
                 try {
                     const response = await AxiosManager.post('/PurchaseOrder/UpdatePurchaseOrder', {
-                        id, orderDate, description, vendorId, updatedById, taxId, discount
+                        id, description, vendorId, updatedById, taxId, discount
                     });
                     return response;
                 } catch (error) {
@@ -227,6 +233,9 @@
             populateTaxListLookupData: async () => { // Add tax population
                 const response = await services.getTaxListLookupData();
                 state.taxListLookupData = response?.data?.content?.data;
+                if (state.taxListLookupData && state.taxListLookupData.length > 0 && !state.taxId) {
+                    state.taxId = state.taxListLookupData[0].id;
+                }
             },
             populateMainData: async () => {
                 const response = await services.getMainData();
@@ -320,7 +329,9 @@
                     state.subTotalAmount = NumberFormatManager.formatToLocale(record.beforeTaxAmount ?? 0);
                     state.vatAmount = NumberFormatManager.formatToLocale(record.vatAmount ?? 0);
                     state.withholdingAmount = NumberFormatManager.formatToLocale(record.withholdingAmount ?? 0);
-                    state.discount = NumberFormatManager.formatToLocale(record.discount ?? 0);
+                    //state.discount = NumberFormatManager.formatToLocale(record.discount ?? 0);
+                    state.discount = record.discount ?? 0; // Don't format this one
+                    state.discountDisplay = NumberFormatManager.formatToLocale(record.discount ?? 0);
                     state.totalAmount = NumberFormatManager.formatToLocale(record.afterTaxAmount ?? 0);
                 }
             },
@@ -378,6 +389,14 @@
                 }
             },
             handleFormSubmit: async () => {
+                console.log('=== Starting form submission ===');
+                console.log('Form State:', {
+                    description: state.description,
+                    vendorId: state.vendorId,
+                    taxId: state.taxId, // This might be null
+                    discount: state.discount,
+                    createdById: StorageManager.getUserId()
+                });
                 state.isSubmitting = true;
                 await new Promise(resolve => setTimeout(resolve, 200));
 
@@ -385,13 +404,27 @@
                     state.isSubmitting = false;
                     return;
                 }
-
+            
                 try {
+                    let taxIdToUse = state.taxId;
+                    if (!taxIdToUse && state.taxListLookupData && state.taxListLookupData.length > 0) {
+                        taxIdToUse = state.taxListLookupData[0].id;
+                        console.log('Using default tax:', taxIdToUse);
+                    }
+
+                    console.log('Making API call with data:', {
+                        description: state.description,
+                        customerId: state.vendorId,
+                        taxId: taxIdToUse,
+                        discount: state.discount,
+                        createdById: StorageManager.getUserId()
+                    });
+
                     const response = state.id === ''
-                        ? await services.createMainData( state.description, state.vendorId, StorageManager.getUserId(), state.taxId, state.discount)
+                        ? await services.createMainData(state.description, state.vendorId, StorageManager.getUserId(), taxIdToUse, state.discount)
                         : state.deleteMode
                             ? await services.deleteMainData(state.id, StorageManager.getUserId())
-                            : await services.updateMainData(state.id, state.description, state.vendorId, StorageManager.getUserId(), state.taxId, state.discount);
+                            : await services.updateMainData(state.id, state.description, state.vendorId, StorageManager.getUserId(), taxIdToUse, state.discount);
 
                     if (response.data.code === 200) {
                         await methods.populateMainData();
@@ -401,11 +434,12 @@
                             state.mainTitle = 'Edit Purchase Order';
                             state.id = response?.data?.content?.data.id ?? '';
                             state.number = response?.data?.content?.data.number ?? '';
-                            state.orderDate = response?.data?.content?.data.orderDate ? new Date(response.data.content.data.orderDate) : null;
+                            //state.orderDate = response?.data?.content?.data.orderDate ? new Date(response.data.content.data.orderDate) : null;
                             state.description = response?.data?.content?.data.description ?? '';
                             state.vendorId = response?.data?.content?.data.vendorId ?? '';
                             //state.orderStatus = String(response?.data?.content?.data.orderStatus ?? '');
-                            state.taxId = response?.data?.content?.data.taxId ?? null;
+                            //state.taxId = response?.data?.content?.data.taxId ?? null;
+                            state.taxId = response?.data?.content?.data.taxId ?? taxIdToUse;
                             state.discount = response?.data?.content?.data.discount ?? 0;
                             state.showComplexDiv = true;
                             taxListLookup.trackingChange = true;
@@ -441,6 +475,8 @@
                         });
                     }
                 } catch (error) {
+                    console.error('Form submission error:', error);
+                    console.error('Error response:', error.response);
                     Swal.fire({
                         icon: 'error',
                         title: 'An Error Occurred',
@@ -462,6 +498,8 @@
             obj: null,
             create: () => {
                 if (state.vendorListLookupData && Array.isArray(state.vendorListLookupData)) {
+                    console.log('Creating vendor dropdown with data:', state.vendorListLookupData);
+                    console.log('Initial vendorId value:', state.vendorId);
                     vendorListLookup.obj = new ej.dropdowns.DropDownList({
                         dataSource: state.vendorListLookupData,
                         fields: { value: 'id', text: 'name' },
@@ -469,6 +507,7 @@
                         filterBarPlaceholder: 'Search',
                         sortOrder: 'Ascending',
                         allowFiltering: true,
+                        value: state.vendorId || null, // Ensure this is set
                         filtering: (e) => {
                             e.preventDefaultAction = true;
                             let query = new ej.data.Query();
@@ -479,6 +518,10 @@
                         },
                         change: (e) => {
                             state.vendorId = e.value;
+                            console.log('vendor dropdown changed - event:', e);
+                            console.log('Selected vendor value:', e.value);
+                            console.log('Selected vendor text:', e.itemData?.name);
+                            console.log('State vendorId after change:', state.vendorId);
                         }
                     });
                     vendorListLookup.obj.appendTo(vendorIdRef.value);
@@ -514,7 +557,7 @@
         //     }
         // };
 
-        const taxListLookup = { // Add tax lookup
+        const taxListLookup = {
             obj: null,
             trackingChange: false,
             create: () => {
@@ -523,10 +566,18 @@
                         dataSource: state.taxListLookupData,
                         fields: { value: 'id', text: 'name' },
                         placeholder: 'Select a Tax',
+                        value: state.taxId,
                         change: async (e) => {
+                            console.log('Tax changed to:', e.value);
                             state.taxId = e.value;
-                            if (e.isInteracted && taxListLookup.trackingChange) {
-                                await methods.handleFormSubmit();
+
+                            // Only auto-submit if we have a customer and we're in edit mode
+                            if (e.isInteracted && taxListLookup.trackingChange && state.vendorId) {
+                                try {
+                                    await methods.handleFormSubmit();
+                                } catch (error) {
+                                    console.error('Error in tax change submit:', error);
+                                }
                             }
                         }
                     });
@@ -539,6 +590,33 @@
                 }
             }
         };
+
+        //const taxListLookup = {
+        //    obj: null,
+        //    trackingChange: false,
+        //    create: () => {
+        //        if (state.taxListLookupData && Array.isArray(state.taxListLookupData)) {
+        //            taxListLookup.obj = new ej.dropdowns.DropDownList({
+        //                dataSource: state.taxListLookupData,
+        //                fields: { value: 'id', text: 'name' },
+        //                placeholder: 'Select a Tax (default will be used if not selected)',
+        //                value: state.taxId,
+        //                change: async (e) => {
+        //                    state.taxId = e.value; // This can be null if user clears selection
+        //                    if (e.isInteracted && taxListLookup.trackingChange) {
+        //                        await methods.handleFormSubmit();
+        //                    }
+        //                }
+        //            });
+        //            taxListLookup.obj.appendTo(taxIdRef.value);
+        //        }
+        //    },
+        //    refresh: () => {
+        //        if (taxListLookup.obj) {
+        //            taxListLookup.obj.value = state.taxId;
+        //        }
+        //    }
+        //};
 
         const orderDatePicker = {
             obj: null,
@@ -694,14 +772,25 @@
                                 state.mainTitle = 'Edit Purchase Order';
                                 state.id = selectedRecord.id ?? '';
                                 state.number = selectedRecord.number ?? '';
-                                state.orderDate = selectedRecord.orderDate ? new Date(selectedRecord.orderDate) : null;
+                                //state.orderDate = selectedRecord.orderDate ? new Date(selectedRecord.orderDate) : null;
                                 state.description = selectedRecord.description ?? '';
                                 state.vendorId = selectedRecord.vendorId ?? '';
                                 //state.orderStatus = String(selectedRecord.orderStatus ?? '');
-                                state.taxId = selectedRecord.taxId ?? null;
+                                //state.taxId = selectedRecord.taxId ?? null;
+                                state.taxId = selectedRecord.taxId ?? (state.taxListLookupData && state.taxListLookupData.length > 0 ? state.taxListLookupData[0].id : null);
                                 state.discount = selectedRecord.discount ?? 0;
                                 state.showComplexDiv = true;
                                 taxListLookup.trackingChange = true;
+
+                          
+                                // Refresh the dropdowns to show the current values
+                                setTimeout(() => {
+                                    vendorListLookup.refresh();
+                                    taxListLookup.refresh();
+                                }, 100);
+
+
+
 
                                 await methods.populateSecondaryData(selectedRecord.id);
                                 secondaryGrid.refresh();

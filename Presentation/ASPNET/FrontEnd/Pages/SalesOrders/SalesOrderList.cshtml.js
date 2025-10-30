@@ -14,7 +14,7 @@
             orderDate: '',
             description: '',
             customerId: null,
-           // orderStatus: null,
+            displayDiscount: '0.00', // Formatted discount for display           // orderStatus: null,
             taxId: null,
             barcode: '',
             errors: {
@@ -85,6 +85,7 @@
             state.discount = 0;
             state.totalAmount = '0.00';
             state.showComplexDiv = false;
+            state.displayDiscount = '0.00';
         };
 
         const services = {
@@ -124,10 +125,10 @@
                     throw error;
                 }
             },
-            updateMainData: async (id, orderDate, description, customerId, taxId, updatedById, discount) => {
+            updateMainData: async (id, description, customerId, taxId, updatedById, discount) => {
                 try {
                     const response = await AxiosManager.post('/SalesOrder/UpdateSalesOrder', {
-                        id, orderDate, description, customerId, taxId, updatedById, discount
+                        id, description, customerId, taxId, updatedById, discount
                     });
                     return response;
                 } catch (error) {
@@ -346,19 +347,99 @@
                 }
             },
 
+            //refreshPaymentSummary: async (id) => {
+            //    const record = state.mainData.find(item => item.id === id);
+            //    if (record) {
+            //        console.log('Record found for payment summary:', record);
+            //        state.subTotalAmount = NumberFormatManager.formatToLocale(record.beforeTaxAmount ?? 0);
+            //        state.vatAmount = NumberFormatManager.formatToLocale(record.vatAmount ?? 0);
+            //        state.withholdingAmount = NumberFormatManager.formatToLocafle(record.withholdingAmount ?? 0);
+            //        //state.discount = NumberFormatManager.formatToLocale(record.discount ?? 0);
+            //        state.discount = record.discount ?? 0;
+            //        state.totalAmount = NumberFormatManager.formatToLocale(record.afterTaxAmount ?? 0);
+            //        state.discount = NumberFormatManager.formatToLocale(record.discount ?? 0); // Format discount
+            //    }
+            //},
+
             refreshPaymentSummary: async (id) => {
+                console.log('NumberFormatManager available:', typeof NumberFormatManager);
+                console.log('formatToLocale available:', typeof NumberFormatManager.formatToLocale);
+
                 const record = state.mainData.find(item => item.id === id);
                 if (record) {
-                    state.subTotalAmount = NumberFormatManager.formatToLocale(record.beforeTaxAmount ?? 0);
-                    state.vatAmount = NumberFormatManager.formatToLocale(record.vatAmount ?? 0);
-                    state.withholdingAmount = NumberFormatManager.formatToLocale(record.withholdingAmount ?? 0);
-                    //state.discount = NumberFormatManager.formatToLocale(record.discount ?? 0);
-                    state.discount = record.discount ?? 0;
-                    state.totalAmount = NumberFormatManager.formatToLocale(record.afterTaxAmount ?? 0);
-                    state.discount = NumberFormatManager.formatToLocale(record.discount ?? 0); // Format discount
+                    console.log('Record found for payment summary:', record);
+
+                    try {
+                        state.subTotalAmount = NumberFormatManager.formatToLocale(record.beforeTaxAmount ?? 0);
+                        state.vatAmount = NumberFormatManager.formatToLocale(record.vatAmount ?? 0);
+                        state.withholdingAmount = NumberFormatManager.formatToLocale(record.withholdingAmount ?? 0);
+                        state.discount = record.discount ?? 0;
+                        state.totalAmount = NumberFormatManager.formatToLocale(record.afterTaxAmount ?? 0);
+
+                        // Update display discount
+                        methods.formatDisplayDiscount();
+
+                        console.log('Payment summary updated successfully');
+                    } catch (error) {
+                        console.error('Error in payment summary:', error);
+                        // Fallback to basic formatting
+                        state.subTotalAmount = (record.beforeTaxAmount ?? 0).toString();
+                        state.vatAmount = (record.vatAmount ?? 0).toString();
+                        state.withholdingAmount = (record.withholdingAmount ?? 0).toString();
+                        state.discount = record.discount ?? 0;
+                        state.totalAmount = (record.afterTaxAmount ?? 0).toString();
+                        methods.formatDisplayDiscount();
+                    }
+                } else {
+                    console.log('No record found for id:', id);
+                    // Set default values
+                    state.subTotalAmount = '0.00';
+                    state.vatAmount = '0.00';
+                    state.withholdingAmount = '0.00';
+                    state.discount = 0;
+                    state.displayDiscount = '0.00';
+                    state.totalAmount = '0.00';
                 }
             },
-           
+            //refreshPaymentSummary: async (id) => {
+            //    console.log('NumberFormatManager available:', typeof NumberFormatManager);
+            //    console.log('formatToLocale available:', typeof NumberFormatManager.formatToLocale);
+
+            //    const record = state.mainData.find(item => item.id === id);
+            //    if (record) {
+            //        console.log('Record found for payment summary:', record);
+
+            //        try {
+            //            state.subTotalAmount = NumberFormatManager.formatToLocale(record.beforeTaxAmount ?? 0);
+            //            state.vatAmount = NumberFormatManager.formatToLocale(record.vatAmount ?? 0);
+            //            state.withholdingAmount = NumberFormatManager.formatToLocale(record.withholdingAmount ?? 0);
+            //            //state.discount = record.discount ?? 0;
+            //            state.totalAmount = NumberFormatManager.formatToLocale(record.afterTaxAmount ?? 0);
+
+            //            state.discount = record.discount ?? 0; // Don't format this one
+            //            state.discountDisplay = NumberFormatManager.formatToLocale(record.discount ?? 0);
+            //            console.log('Payment summary updated successfully');
+            //        } catch (error) {
+            //            console.error('Error in payment summary:', error);
+            //            // Fallback to basic formatting
+            //            state.subTotalAmount = (record.beforeTaxAmount ?? 0).toString();
+            //            state.vatAmount = (record.vatAmount ?? 0).toString();
+            //            state.withholdingAmount = (record.withholdingAmount ?? 0).toString();
+            //            state.discount = record.discount ?? 0;
+            //            state.totalAmount = (record.afterTaxAmount ?? 0).toString();
+
+            //        }
+            //    } else {
+            //        console.log('No record found for id:', id);
+            //        // Set default values
+            //        state.subTotalAmount = '0.00';
+            //        state.vatAmount = '0.00';
+            //        state.withholdingAmount = '0.00';
+            //        state.discount = 0;
+            //        state.totalAmount = '0.00';
+            //    }
+            //},
+
             updateDiscount: async () => {
                 if (!state.id) return;
 
@@ -389,7 +470,7 @@
                     if (response.status === 200) {
                         await methods.populateMainData();
                         await methods.refreshPaymentSummary(state.id);
-                        console.log('test', response)
+
                         Swal.fire({
                             icon: 'success',
                             title: 'Discount Updated',
@@ -415,6 +496,63 @@
                     state.isSubmitting = false;
                 }
             },
+
+            //updateDiscount: async () => {
+            //    if (!state.id) return;
+
+            //    try {
+            //        // Validate discount is a positive number
+            //        const discountValue = parseFloat(state.discount) || 0;
+            //        if (discountValue < 0) {
+            //            Swal.fire({
+            //                icon: 'error',
+            //                title: 'Invalid Discount',
+            //                text: 'Discount cannot be negative.',
+            //                confirmButtonText: 'OK'
+            //            });
+            //            state.discount = 0;
+            //            return;
+            //        }
+
+            //        state.isSubmitting = true;
+
+            //        // Update discount via API
+            //        const response = await services.updateSalesOrderDiscount(
+            //            state.id,
+            //            discountValue,
+            //            StorageManager.getUserId()
+            //        );
+            //        console.log('test222', response)
+
+            //        if (response.status === 200) {
+            //            await methods.populateMainData();
+            //            await methods.refreshPaymentSummary(state.id);
+            //            console.log('test', response)
+            //            Swal.fire({
+            //                icon: 'success',
+            //                title: 'Discount Updated',
+            //                timer: 1000,
+            //                showConfirmButton: false
+            //            });
+            //        } else {
+            //            Swal.fire({
+            //                icon: 'error',
+            //                title: 'Update Failed',
+            //                text: response.data.message ?? 'Failed to update discount.',
+            //                confirmButtonText: 'Try Again'
+            //            });
+            //        }
+            //    } catch (error) {
+            //        Swal.fire({
+            //            icon: 'error',
+            //            title: 'An Error Occurred',
+            //            text: error.response?.data?.message ?? 'Please try again.',
+            //            confirmButtonText: 'OK'
+            //        });
+            //    } finally {
+            //        state.isSubmitting = false;
+            //    }
+            //},
             handleFormSubmit: async () => {
                 state.isSubmitting = true;
                 await new Promise(resolve => setTimeout(resolve, 200));
@@ -446,7 +584,7 @@
                             state.mainTitle = 'Edit Sales Order';
                             state.id = response?.data?.content?.data.id ?? '';
                             state.number = response?.data?.content?.data.number ?? '';
-                            state.orderDate = response?.data?.content?.data.orderDate ? new Date(response.data.content.data.orderDate) : null;
+                            //state.orderDate = response?.data?.content?.data.orderDate ? new Date(response.data.content.data.orderDate) : null;
                             state.description = response?.data?.content?.data.description ?? '';
                             state.customerId = response?.data?.content?.data.customerId ?? '';
                             //state.orderStatus = String(response?.data?.content?.data.orderStatus ?? '');
@@ -485,6 +623,8 @@
                         });
                     }
                 } catch (error) {
+                    console.error('Form submission error:', error);
+                    console.error('Error response:', error.response);
                     Swal.fire({
                         icon: 'error',
                         title: 'An Error Occurred',
@@ -736,7 +876,7 @@
                                 state.mainTitle = 'Edit Sales Order';
                                 state.id = selectedRecord.id ?? '';
                                 state.number = selectedRecord.number ?? '';
-                                state.orderDate = selectedRecord.orderDate ? new Date(selectedRecord.orderDate) : null;
+                                //state.orderDate = selectedRecord.orderDate ? new Date(selectedRecord.orderDate) : null;
                                 state.description = selectedRecord.description ?? '';
                                 state.customerId = selectedRecord.customerId ?? '';
                                // state.orderStatus = String(selectedRecord.orderStatus ?? '');
@@ -758,7 +898,7 @@
                                 state.mainTitle = 'Delete Sales Order?';
                                 state.id = selectedRecord.id ?? '';
                                 state.number = selectedRecord.number ?? '';
-                                state.orderDate = selectedRecord.orderDate ? new Date(selectedRecord.orderDate) : null;
+                                //state.orderDate = selectedRecord.orderDate ? new Date(selectedRecord.orderDate) : null;
                                 state.description = selectedRecord.description ?? '';
                                 state.customerId = selectedRecord.customerId ?? '';
                               //  state.orderStatus = String(selectedRecord.orderStatus ?? '');
