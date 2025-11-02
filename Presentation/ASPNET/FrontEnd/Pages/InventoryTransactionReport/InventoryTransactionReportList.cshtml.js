@@ -80,6 +80,7 @@
                         { field: 'outgoing', headerText: 'منصرف(-)', width: 90, type: 'number', format: 'N2', textAlign: 'Right', customAttributes: { class: 'outgoing-cell' } },
                         { field: 'purchaseValue', headerText: 'التكلفة', width: 110, type: 'number', format: 'N2', textAlign: 'Right' },
                         { field: 'stock', headerText: 'الرصيد', width: 110, type: 'number', format: 'N2', textAlign: 'Right', customAttributes: { class: 'stock-cell' } },
+                        { field: 'balanceValue', headerText: 'قيمة الرصيد', width: 130, type: 'number', format: 'N2', textAlign: 'Right', customAttributes: { class: 'balance-cell' } },
                         { field: 'productNumber', headerText: 'رقم الصنف', width: 120 },
                         { field: 'productName', headerText: 'اسم الصنف', width: 180, visible: false }, // hidden if not needed visually
                         { field: 'moduleNumber', headerText: 'رقم المستند', width: 140 },
@@ -154,6 +155,17 @@
                                         moduleCell.style.backgroundColor = '#cce5ff'; // blue-ish for purchase
                                     } else if (txt.includes('تحويل')) {
                                         moduleCell.style.backgroundColor = '#e6f7e6'; // light green for transfers
+                                    }
+                                }
+
+                                // optional balance styling
+                                const balanceCell = row.querySelector('.balance-cell');
+                                if (balanceCell) {
+                                    // you can apply formatting/coloring if needed
+                                    const val = parseFloat(balanceCell.textContent.replace(/,/g, ''));
+                                    if (!isNaN(val)) {
+                                        // example: highlight large values (optional)
+                                        // if (val > 10000) balanceCell.style.backgroundColor = '#e6ffe6';
                                     }
                                 }
                             });

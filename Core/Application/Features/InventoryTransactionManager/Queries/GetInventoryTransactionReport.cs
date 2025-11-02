@@ -24,6 +24,7 @@ namespace Application.Features.InventoryTransactionManager.Queries
         public double? Stock { get; init; }
         public double? PurchaseValue { get; init; }
         public double? SalesValue { get; init; }
+        public double? BalanceValue { get; init; } // new: قيمة الرصيد (stock * unit cost)
         public string? WarehouseName { get; init; }
         public string? ProductName { get; init; }
         public string? ProductNumber { get; init; }
@@ -119,6 +120,7 @@ namespace Application.Features.InventoryTransactionManager.Queries
                     double productRunningPurchaseValue = 0;
                     double productRunningSalesValue = 0;
 
+                    // choose unit cost source - use product unit price as fallback
                     foreach (var transaction in group.OrderBy(x => x.MovementDate).ThenBy(x => x.CreatedAtUtc))
                     {
                         // quantity moved (absolute)
@@ -158,7 +160,7 @@ namespace Application.Features.InventoryTransactionManager.Queries
                         double unitPurchasePrice = transaction.Product?.UnitPrice ?? 0.0;
                         double unitSalesPrice = transaction.Product?.UnitPrice ?? 0.0;
 
-                        // Compute values using absolute qty and unit prices
+                        // Compute values using movement (signed) so running totals reflect direction
                         double purchaseValue = unitPurchasePrice * movement;
                         double salesValue = unitSalesPrice * movement;
 
@@ -167,10 +169,13 @@ namespace Application.Features.InventoryTransactionManager.Queries
                         productRunningPurchaseValue += purchaseValue;
                         productRunningSalesValue += salesValue;
 
+                        // BalanceValue = current running stock * unit purchase price (قيمة الرصيد)
+                        double balanceValue = productRunningStock * unitPurchasePrice;
+
                         var dto = new InventoryTransactionReportDto
                         {
                             TransactionDate = transaction.MovementDate,
-                            Description = transaction.ModuleName, // if you have a better description use it
+                            Description = transaction.ModuleName,
                             PurchasePrice = unitPurchasePrice != 0 ? unitPurchasePrice : (double?)null,
                             SalesPrice = unitSalesPrice != 0 ? unitSalesPrice : (double?)null,
                             Incoming = incoming > 0 ? incoming : (double?)null,
@@ -178,6 +183,7 @@ namespace Application.Features.InventoryTransactionManager.Queries
                             Stock = productRunningStock,
                             PurchaseValue = productRunningPurchaseValue,
                             SalesValue = productRunningSalesValue,
+                            BalanceValue = balanceValue,
                             WarehouseName = transaction.Warehouse?.Name,
                             ProductName = transaction.Product?.Name,
                             ProductNumber = transaction.Product?.Number,
