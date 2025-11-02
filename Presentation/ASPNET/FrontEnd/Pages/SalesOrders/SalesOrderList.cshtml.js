@@ -77,6 +77,12 @@
               //  orderStatus: '',
                 description: ''
             };
+            // Auto-apply first tax if available
+            if (state.taxListLookupData && state.taxListLookupData.length > 0) {
+                state.taxId = state.taxListLookupData[0].id;
+            } else {
+                state.taxId = null;
+            }
             state.secondaryData = [];
             state.subTotalAmount = '0.00';
             state.vatAmount = '0.00';
@@ -255,6 +261,10 @@
             populateTaxListLookupData: async () => {
                 const response = await services.getTaxListLookupData();
                 state.taxListLookupData = response?.data?.content?.data;
+                // Auto-apply first tax when tax list is loaded
+                if (state.taxListLookupData && state.taxListLookupData.length > 0 && !state.taxId) {
+                    state.taxId = state.taxListLookupData[0].id;
+                }
             },
             populateMainData: async () => {
                 const response = await services.getMainData();
@@ -362,43 +372,14 @@
             //},
 
             refreshPaymentSummary: async (id) => {
-                console.log('NumberFormatManager available:', typeof NumberFormatManager);
-                console.log('formatToLocale available:', typeof NumberFormatManager.formatToLocale);
-
                 const record = state.mainData.find(item => item.id === id);
                 if (record) {
-                    console.log('Record found for payment summary:', record);
-
-                    try {
-                        state.subTotalAmount = NumberFormatManager.formatToLocale(record.beforeTaxAmount ?? 0);
-                        state.vatAmount = NumberFormatManager.formatToLocale(record.vatAmount ?? 0);
-                        state.withholdingAmount = NumberFormatManager.formatToLocale(record.withholdingAmount ?? 0);
-                        state.discount = record.discount ?? 0;
-                        state.totalAmount = NumberFormatManager.formatToLocale(record.afterTaxAmount ?? 0);
-
-                        // Update display discount
-                        methods.formatDisplayDiscount();
-
-                        console.log('Payment summary updated successfully');
-                    } catch (error) {
-                        console.error('Error in payment summary:', error);
-                        // Fallback to basic formatting
-                        state.subTotalAmount = (record.beforeTaxAmount ?? 0).toString();
-                        state.vatAmount = (record.vatAmount ?? 0).toString();
-                        state.withholdingAmount = (record.withholdingAmount ?? 0).toString();
-                        state.discount = record.discount ?? 0;
-                        state.totalAmount = (record.afterTaxAmount ?? 0).toString();
-                        methods.formatDisplayDiscount();
-                    }
-                } else {
-                    console.log('No record found for id:', id);
-                    // Set default values
-                    state.subTotalAmount = '0.00';
-                    state.vatAmount = '0.00';
-                    state.withholdingAmount = '0.00';
-                    state.discount = 0;
-                    state.displayDiscount = '0.00';
-                    state.totalAmount = '0.00';
+                    state.subTotalAmount = NumberFormatManager.formatToLocale(record.beforeTaxAmount ?? 0);
+                    state.vatAmount = NumberFormatManager.formatToLocale(record.vatAmount ?? 0);
+                    state.withholdingAmount = NumberFormatManager.formatToLocale(record.withholdingAmount ?? 0);
+                    state.discount = record.discount ?? 0; // Don't format this one
+                    state.discountDisplay = NumberFormatManager.formatToLocale(record.discount ?? 0);
+                    state.totalAmount = NumberFormatManager.formatToLocale(record.afterTaxAmount ?? 0);
                 }
             },
             //refreshPaymentSummary: async (id) => {
@@ -413,11 +394,12 @@
             //            state.subTotalAmount = NumberFormatManager.formatToLocale(record.beforeTaxAmount ?? 0);
             //            state.vatAmount = NumberFormatManager.formatToLocale(record.vatAmount ?? 0);
             //            state.withholdingAmount = NumberFormatManager.formatToLocale(record.withholdingAmount ?? 0);
-            //            //state.discount = record.discount ?? 0;
+            //            state.discount = record.discount ?? 0;
             //            state.totalAmount = NumberFormatManager.formatToLocale(record.afterTaxAmount ?? 0);
 
-            //            state.discount = record.discount ?? 0; // Don't format this one
-            //            state.discountDisplay = NumberFormatManager.formatToLocale(record.discount ?? 0);
+            //            // Update display discount
+            //            methods.formatDisplayDiscount();
+
             //            console.log('Payment summary updated successfully');
             //        } catch (error) {
             //            console.error('Error in payment summary:', error);
@@ -427,7 +409,7 @@
             //            state.withholdingAmount = (record.withholdingAmount ?? 0).toString();
             //            state.discount = record.discount ?? 0;
             //            state.totalAmount = (record.afterTaxAmount ?? 0).toString();
-
+            //            methods.formatDisplayDiscount();
             //        }
             //    } else {
             //        console.log('No record found for id:', id);
@@ -436,9 +418,11 @@
             //        state.vatAmount = '0.00';
             //        state.withholdingAmount = '0.00';
             //        state.discount = 0;
+            //        state.displayDiscount = '0.00';
             //        state.totalAmount = '0.00';
             //    }
             //},
+           
 
             updateDiscount: async () => {
                 if (!state.id) return;
@@ -554,6 +538,12 @@
             //    }
             //},
             handleFormSubmit: async () => {
+
+                let taxIdToUse = state.taxId;
+                if (!taxIdToUse && state.taxListLookupData && state.taxListLookupData.length > 0) {
+                    taxIdToUse = state.taxListLookupData[0].id;
+                    console.log('Using default tax:', taxIdToUse);
+                }
                 state.isSubmitting = true;
                 await new Promise(resolve => setTimeout(resolve, 200));
 
@@ -571,10 +561,10 @@
                         createdById: StorageManager.getUserId()
                     });
                     const response = state.id === ''
-                        ? await services.createMainData(state.description, state.customerId, state.taxId, StorageManager.getUserId(), state.discount)
+                        ? await services.createMainData(state.description, state.customerId, taxIdToUse, StorageManager.getUserId(), state.discount)
                         : state.deleteMode
                             ? await services.deleteMainData(state.id, StorageManager.getUserId())
-                            : await services.updateMainData(state.id, state.description, state.customerId, state.taxId, StorageManager.getUserId(), state.discount);
+                            : await services.updateMainData(state.id, state.description, state.customerId, taxIdToUse, StorageManager.getUserId(), state.discount);
                                                          //id, orderDate, description, customerId, taxId, updatedById, discount
                     if (response.data.code === 200) {
                         await methods.populateMainData();
@@ -589,7 +579,8 @@
                             state.customerId = response?.data?.content?.data.customerId ?? '';
                             //state.orderStatus = String(response?.data?.content?.data.orderStatus ?? '');
                             state.discount = response?.data?.content?.data.discount ?? 0;
-                            state.taxId = response?.data?.content?.data.taxId ?? null;
+                            //state.taxId = response?.data?.content?.data.taxId ?? null;
+                            state.taxId = response?.data?.content?.data.taxId ?? taxIdToUse;
                             state.showComplexDiv = true;
                             taxListLookup.trackingChange = true;
                             await methods.refreshPaymentSummary(state.id);
@@ -675,6 +666,32 @@
             }
         };
 
+        //const taxListLookup = {
+        //    obj: null,
+        //    trackingChange: false,
+        //    create: () => {
+        //        if (state.taxListLookupData && Array.isArray(state.taxListLookupData)) {
+        //            taxListLookup.obj = new ej.dropdowns.DropDownList({
+        //                dataSource: state.taxListLookupData,
+        //                fields: { value: 'id', text: 'name' },
+        //                placeholder: 'Select a Tax',
+        //                change: async (e) => {
+        //                    state.taxId = e.value;
+        //                    if (e.isInteracted && taxListLookup.trackingChange) {
+        //                        await methods.handleFormSubmit();
+        //                    }
+        //                }
+        //            });
+        //            taxListLookup.obj.appendTo(taxIdRef.value);
+        //        }
+        //    },
+        //    refresh: () => {
+        //        if (taxListLookup.obj) {
+        //            taxListLookup.obj.value = state.taxId;
+        //        }
+        //    }
+        //};
+
         const taxListLookup = {
             obj: null,
             trackingChange: false,
@@ -684,10 +701,18 @@
                         dataSource: state.taxListLookupData,
                         fields: { value: 'id', text: 'name' },
                         placeholder: 'Select a Tax',
+                        value: state.taxId,
                         change: async (e) => {
+                            console.log('Tax changed to:', e.value);
                             state.taxId = e.value;
-                            if (e.isInteracted && taxListLookup.trackingChange) {
-                                await methods.handleFormSubmit();
+
+                            // Only auto-submit if we have a customer and we're in edit mode
+                            if (e.isInteracted && taxListLookup.trackingChange && state.customerId) {
+                                try {
+                                    await methods.handleFormSubmit();
+                                } catch (error) {
+                                    console.error('Error in tax change submit:', error);
+                                }
                             }
                         }
                     });
@@ -700,7 +725,6 @@
                 }
             }
         };
-
         //const salesOrderStatusListLookup = {
         //    obj: null,
         //    create: () => {
@@ -777,6 +801,12 @@
         //    }
         //);
 
+        //Vue.watch(
+        //    () => state.taxId,
+        //    (newVal, oldVal) => {
+        //        taxListLookup.refresh();
+        //    }
+        //);
         Vue.watch(
             () => state.taxId,
             (newVal, oldVal) => {
