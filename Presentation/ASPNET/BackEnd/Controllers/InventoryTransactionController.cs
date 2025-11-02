@@ -654,6 +654,64 @@ public class InventoryTransactionController : BaseApiController
         });
     }
 
+
+    [Authorize]
+    [HttpGet("GetInventoryTransactionReport")]
+    public async Task<ActionResult<ApiSuccessResult<GetInventoryTransactionReportResult>>> GetInventoryTransactionReportAsync(
+     [FromQuery] string? warehouseId = null,
+     [FromQuery] string? productId = null,
+     [FromQuery] string? fromDate = null,
+     [FromQuery] string? toDate = null,
+     CancellationToken cancellationToken = default
+     )
+    {
+        // Parse ISO date strings coming from the front-end safely
+        DateTime? from = null;
+        DateTime? to = null;
+
+        if (!string.IsNullOrWhiteSpace(fromDate))
+        {
+            if (DateTime.TryParse(fromDate, null, System.Globalization.DateTimeStyles.RoundtripKind, out var parsedFrom))
+            {
+                from = parsedFrom;
+            }
+            else
+            {
+                return BadRequest(new { Code = StatusCodes.Status400BadRequest, Message = "Invalid fromDate format" });
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(toDate))
+        {
+            if (DateTime.TryParse(toDate, null, System.Globalization.DateTimeStyles.RoundtripKind, out var parsedTo))
+            {
+                to = parsedTo;
+            }
+            else
+            {
+                return BadRequest(new { Code = StatusCodes.Status400BadRequest, Message = "Invalid toDate format" });
+            }
+        }
+
+        var request = new GetInventoryTransactionReportRequest
+        {
+            WarehouseId = warehouseId,
+            ProductId = productId,
+            FromDate = from,
+            ToDate = to
+        };
+
+        var response = await _sender.Send(request, cancellationToken);
+
+        return Ok(new ApiSuccessResult<GetInventoryTransactionReportResult>
+        {
+            Code = StatusCodes.Status200OK,
+            Message = $"Success executing {nameof(GetInventoryTransactionReportAsync)}",
+            Content = response
+        });
+    }
+
 }
+
 
 

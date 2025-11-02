@@ -3,11 +3,6 @@ using System.Text.Json;
 
 namespace Infrastructure.SecurityManager.NavigationMenu;
 
-
-
-
-
-
 public class JsonStructureItem
 {
     public string? URL { get; set; }
@@ -155,6 +150,11 @@ public static class NavigationTreeStructure
                 {
                     "URL": "/TransactionReports/TransactionReportList",
                     "Name": "Transaction Report",
+                    "IsModule": false
+                },
+                {
+                    "URL": "/InventoryTransactionReport/InventoryTransactionReportList",
+                    "Name": "Inventory Transaction Report",
                     "IsModule": false
                 },
                 {
@@ -310,7 +310,6 @@ public static class NavigationTreeStructure
             }
         }
     }
-
 
 }
 
