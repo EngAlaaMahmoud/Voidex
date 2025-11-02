@@ -5,6 +5,11 @@ using Domain.Entities;
 using Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Application.Features.InventoryTransactionManager.Queries
 {
@@ -105,79 +110,92 @@ namespace Application.Features.InventoryTransactionManager.Queries
 
         private List<InventoryTransactionReportDto> CalculateRunningBalances(List<InventoryTransaction> transactions)
         {
-            // Group by warehouse + product and compute running balances per group
-            var grouped = transactions
+            var groupedTransactions = transactions
                 .GroupBy(x => new { x.WarehouseId, x.ProductId })
-                .SelectMany(g =>
+                .SelectMany(group =>
                 {
-                    var list = new List<InventoryTransactionReportDto>();
+                    var productTransactions = new List<InventoryTransactionReportDto>();
                     double productRunningStock = 0;
                     double productRunningPurchaseValue = 0;
                     double productRunningSalesValue = 0;
 
-                    foreach (var tx in g.OrderBy(x => x.MovementDate).ThenBy(x => x.CreatedAtUtc))
+                    foreach (var transaction in group.OrderBy(x => x.MovementDate).ThenBy(x => x.CreatedAtUtc))
                     {
-                        var qty = tx.Movement ?? 0.0;
+                        // quantity moved (absolute)
+                        var qty = transaction.Movement ?? 0.0;
+
+                        // movement sign for running stock (positive for incoming, negative for outgoing)
                         double movement = 0.0;
                         double incoming = 0.0;
                         double outgoing = 0.0;
 
-                        if (tx.TransType == InventoryTransType.In)
+                        switch (transaction.TransType)
                         {
-                            movement = qty;
-                            incoming = qty;
-                        }
-                        else if (tx.TransType == InventoryTransType.Out)
-                        {
-                            movement = -qty;
-                            outgoing = qty;
-                        }
-                        else
-                        {
-                            // Fallback: use Movement sign if TransType not set
-                            movement = qty;
-                            if (qty > 0) incoming = qty;
-                            else { outgoing = Math.Abs(qty); movement = qty; }
+                            case InventoryTransType.In:
+                                movement = qty;
+                                incoming = qty;
+                                break;
+                            case InventoryTransType.Out:
+                                movement = -qty;
+                                outgoing = qty;
+                                break;
+                            default:
+                                // fallback: if WarehouseFromId present treat as outgoing, else incoming
+                                if (!string.IsNullOrEmpty(transaction.WarehouseFromId))
+                                {
+                                    movement = -qty;
+                                    outgoing = qty;
+                                }
+                                else
+                                {
+                                    movement = qty;
+                                    incoming = qty;
+                                }
+                                break;
                         }
 
-                        // There are no explicit PurchasePrice/SalesPrice fields on InventoryTransaction in this repo,
-                        // so keep price-based values null / zero.
-                        double purchaseValue = 0.0;
-                        double salesValue = 0.0;
+                        // Determine unit prices (use Product.UnitPrice when no transaction-specific price available)
+                        double unitPurchasePrice = transaction.Product?.UnitPrice ?? 0.0;
+                        double unitSalesPrice = transaction.Product?.UnitPrice ?? 0.0;
 
+                        // Compute values using absolute qty and unit prices
+                        double purchaseValue = unitPurchasePrice * movement;
+                        double salesValue = unitSalesPrice * movement;
+
+                        // Update running balances
                         productRunningStock += movement;
                         productRunningPurchaseValue += purchaseValue;
                         productRunningSalesValue += salesValue;
 
                         var dto = new InventoryTransactionReportDto
                         {
-                            TransactionDate = tx.MovementDate,
-                            Description = null,
-                            PurchasePrice = null,
-                            SalesPrice = null,
+                            TransactionDate = transaction.MovementDate,
+                            Description = transaction.ModuleName, // if you have a better description use it
+                            PurchasePrice = unitPurchasePrice != 0 ? unitPurchasePrice : (double?)null,
+                            SalesPrice = unitSalesPrice != 0 ? unitSalesPrice : (double?)null,
                             Incoming = incoming > 0 ? incoming : (double?)null,
                             Outgoing = outgoing > 0 ? outgoing : (double?)null,
                             Stock = productRunningStock,
-                            PurchaseValue = productRunningPurchaseValue != 0 ? productRunningPurchaseValue : null,
-                            SalesValue = productRunningSalesValue != 0 ? productRunningSalesValue : null,
-                            WarehouseName = tx.Warehouse?.Name,
-                            ProductName = tx.Product?.Name,
-                            ProductNumber = tx.Product?.Number,
-                            ModuleName = tx.ModuleName,
-                            ModuleNumber = tx.ModuleNumber,
-                            StatusName = tx.Status.ToString(),
-                            MovementDate = tx.MovementDate,
-                            CreatedAtUtc = tx.CreatedAtUtc
+                            PurchaseValue = productRunningPurchaseValue,
+                            SalesValue = productRunningSalesValue,
+                            WarehouseName = transaction.Warehouse?.Name,
+                            ProductName = transaction.Product?.Name,
+                            ProductNumber = transaction.Product?.Number,
+                            ModuleName = transaction.ModuleName,
+                            ModuleNumber = transaction.ModuleNumber,
+                            StatusName = transaction.Status.ToString(),
+                            MovementDate = transaction.MovementDate,
+                            CreatedAtUtc = transaction.CreatedAtUtc
                         };
 
-                        list.Add(dto);
+                        productTransactions.Add(dto);
                     }
 
-                    return list;
+                    return productTransactions;
                 })
                 .ToList();
 
-            return grouped;
+            return groupedTransactions;
         }
     }
 }
