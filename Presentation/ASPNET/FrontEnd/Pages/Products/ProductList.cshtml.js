@@ -6,7 +6,7 @@
             productGroupListLookupData: [],
             unitMeasureListLookupData: [],
             vatListLookupData: [],
-            taxListLookupData: [],
+            //taxListLookupData: [],
             mainTitle: null,
             id: '',
             name: '',
@@ -17,7 +17,7 @@
             productGroupId: null,
             unitMeasureId: null,
             vatId: null,
-            taxId: null,
+            //taxId: null,
             physical: false,
             errors: {
                 name: '',
@@ -25,7 +25,7 @@
                 productGroupId: '',
                 unitMeasureId: '',
                 vatId: '',
-                taxId: ''
+                //taxId: ''
             },
             isSubmitting: false
         });
@@ -35,7 +35,7 @@
         const productGroupIdRef = Vue.ref(null);
         const unitMeasureIdRef = Vue.ref(null);
         const vatIdRef = Vue.ref(null);
-        const taxIdRef = Vue.ref(null);
+        //const taxIdRef = Vue.ref(null);
         const nameRef = Vue.ref(null);
         const numberRef = Vue.ref(null);
         const barcodeRef = Vue.ref(null);
@@ -157,42 +157,42 @@
             },
         };
 
-        const taxListLookup = {
-            obj: null,
-            create: () => {
-                if (state.taxListLookupData && Array.isArray(state.taxListLookupData) && state.taxListLookupData.length > 0) {
-                    taxListLookup.obj = new ej.dropdowns.DropDownList({
-                        dataSource: state.taxListLookupData,
-                        fields: { value: 'id', text: 'name' },
-                        placeholder: 'Select a Tax',
-                        popupHeight: '200px',
-                        change: (e) => {
-                            state.taxId = e.value;
-                        }
-                    });
-                    taxListLookup.obj.appendTo(taxIdRef.value);
-                } else {
-                    console.warn('Tax list lookup data is not available or invalid.');
-                    // Create empty dropdown as fallback
-                    taxListLookup.obj = new ej.dropdowns.DropDownList({
-                        dataSource: [],
-                        fields: { value: 'id', text: 'name' },
-                        placeholder: 'No Tax data available',
-                        popupHeight: '200px',
-                        enabled: false,
-                        change: (e) => {
-                            state.taxId = e.value;
-                        }
-                    });
-                    taxListLookup.obj.appendTo(taxIdRef.value);
-                }
-            },
-            refresh: () => {
-                if (taxListLookup.obj) {
-                    taxListLookup.obj.value = state.taxId;
-                }
-            },
-        };
+        //const taxListLookup = {
+        //    obj: null,
+        //    create: () => {
+        //        if (state.taxListLookupData && Array.isArray(state.taxListLookupData) && state.taxListLookupData.length > 0) {
+        //            taxListLookup.obj = new ej.dropdowns.DropDownList({
+        //                dataSource: state.taxListLookupData,
+        //                fields: { value: 'id', text: 'name' },
+        //                placeholder: 'Select a Tax',
+        //                popupHeight: '200px',
+        //                change: (e) => {
+        //                    state.taxId = e.value;
+        //                }
+        //            });
+        //            taxListLookup.obj.appendTo(taxIdRef.value);
+        //        } else {
+        //            console.warn('Tax list lookup data is not available or invalid.');
+        //            // Create empty dropdown as fallback
+        //            taxListLookup.obj = new ej.dropdowns.DropDownList({
+        //                dataSource: [],
+        //                fields: { value: 'id', text: 'name' },
+        //                placeholder: 'No Tax data available',
+        //                popupHeight: '200px',
+        //                enabled: false,
+        //                change: (e) => {
+        //                    state.taxId = e.value;
+        //                }
+        //            });
+        //            taxListLookup.obj.appendTo(taxIdRef.value);
+        //        }
+        //    },
+        //    refresh: () => {
+        //        if (taxListLookup.obj) {
+        //            taxListLookup.obj.value = state.taxId;
+        //        }
+        //    },
+        //};
 
         const nameText = {
             obj: null,
@@ -264,7 +264,7 @@
             state.errors.productGroupId = '';
             state.errors.unitMeasureId = '';
             state.errors.vatId = '';
-            state.errors.taxId = '';
+            //state.errors.taxId = '';
 
             let isValid = true;
 
@@ -298,7 +298,7 @@
             state.productGroupId = null;
             state.unitMeasureId = null;
             state.vatId = null;
-            state.taxId = null;
+            //state.taxId = null;
             state.physical = false;
             state.errors = {
                 name: '',
@@ -306,7 +306,7 @@
                 productGroupId: '',
                 unitMeasureId: '',
                 vatId: '',
-                taxId: ''
+                //taxId: ''
             };
         };
 
@@ -319,20 +319,20 @@
                     throw error;
                 }
             },
-            createMainData: async (name, barcode, unitPrice, description, productGroupId, unitMeasureId, vatId, taxId, physical, createdById) => {
+            createMainData: async (name, barcode, unitPrice, description, productGroupId, unitMeasureId, vatId, physical, createdById) => {
                 try {
                     const response = await AxiosManager.post('/Product/CreateProduct', {
-                        name, barcode, unitPrice, description, productGroupId, unitMeasureId, vatId, taxId, physical, createdById
+                        name, barcode, unitPrice, description, productGroupId, unitMeasureId, vatId, physical, createdById
                     });
                     return response;
                 } catch (error) {
                     throw error;
                 }
             },
-            updateMainData: async (id, name, barcode, unitPrice, description, productGroupId, unitMeasureId, vatId, taxId, physical, updatedById) => {
+            updateMainData: async (id, name, barcode, unitPrice, description, productGroupId, unitMeasureId, vatId, physical, updatedById) => {
                 try {
                     const response = await AxiosManager.post('/Product/UpdateProduct', {
-                        id, name, barcode, unitPrice, description, productGroupId, unitMeasureId, vatId, taxId, physical, updatedById
+                        id, name, barcode, unitPrice, description, productGroupId, unitMeasureId, vatId, physical, updatedById
                     });
                     return response;
                 } catch (error) {
@@ -373,14 +373,14 @@
                     throw error;
                 }
             },
-            getTaxListLookupData: async () => {
-                try {
-                    const response = await AxiosManager.get('/Tax/GetTaxList', {});
-                    return response;
-                } catch (error) {
-                    throw error;
-                }
-            }
+            //getTaxListLookupData: async () => {
+            //    try {
+            //        const response = await AxiosManager.get('/Tax/GetTaxList', {});
+            //        return response;
+            //    } catch (error) {
+            //        throw error;
+            //    }
+            //}
         };
 
         const methods = {
@@ -396,10 +396,10 @@
                 const response = await services.getVatListLookupData();
                 state.vatListLookupData = response?.data?.content?.data;
             },
-            populateTaxListLookupData: async () => {
-                const response = await services.getTaxListLookupData();
-                state.taxListLookupData = response?.data?.content?.data;
-            },
+            //populateTaxListLookupData: async () => {
+            //    const response = await services.getTaxListLookupData();
+            //    state.taxListLookupData = response?.data?.content?.data;
+            //},
             populateMainData: async () => {
                 const response = await services.getMainData();
                 state.mainData = response?.data?.content?.data.map(item => ({
@@ -418,10 +418,10 @@
 
                 try {
                     const response = state.id === ''
-                        ? await services.createMainData(state.name, state.barcode, state.unitPrice, state.description, state.productGroupId, state.unitMeasureId, state.vatId, state.taxId, state.physical, StorageManager.getUserId())
+                        ? await services.createMainData(state.name, state.barcode, state.unitPrice, state.description, state.productGroupId, state.unitMeasureId, state.vatId, state.physical, StorageManager.getUserId())
                         : state.deleteMode
                             ? await services.deleteMainData(state.id, StorageManager.getUserId())
-                            : await services.updateMainData(state.id, state.name, state.barcode, state.unitPrice, state.description, state.productGroupId, state.unitMeasureId, state.vatId, state.taxId, state.physical, StorageManager.getUserId());
+                            : await services.updateMainData(state.id, state.name, state.barcode, state.unitPrice, state.description, state.productGroupId, state.unitMeasureId, state.vatId,  state.physical, StorageManager.getUserId());
 
                     if (response.data.code === 200) {
                         await methods.populateMainData();
@@ -438,7 +438,7 @@
                             state.productGroupId = response?.data?.content?.data.productGroupId ?? '';
                             state.unitMeasureId = response?.data?.content?.data.unitMeasureId ?? '';
                             state.vatId = response?.data?.content?.data.vatId ?? '';
-                            state.taxId = response?.data?.content?.data.taxId ?? '';
+                            //state.taxId = response?.data?.content?.data.taxId ?? '';
                             state.physical = response?.data?.content?.data.physical ?? false;
 
                             Swal.fire({
@@ -520,7 +520,7 @@
                         { field: 'productGroupName', headerText: 'Product Group', width: 150 },
                         { field: 'unitMeasureName', headerText: 'Unit Measure', width: 150 },
                         { field: 'vatName', headerText: 'VAT', width: 150 },
-                        { field: 'taxName', headerText: 'Tax', width: 150 },
+                        //{ field: 'taxName', headerText: 'Tax', width: 150 },
                         { field: 'physical', headerText: 'Physical', width: 150, displayAsCheckBox: true, type: 'boolean' },
                         { field: 'createdAtUtc', headerText: 'Created At UTC', width: 150, format: 'yyyy-MM-dd HH:mm' }
                     ],
@@ -534,7 +534,7 @@
                     beforeDataBound: () => { },
                     dataBound: function () {
                         mainGrid.obj.toolbarModule.enableItems(['EditCustom', 'DeleteCustom'], false);
-                        mainGrid.obj.autoFitColumns(['name', 'number', 'barcode', 'unitPrice', 'productGroupName', 'unitMeasureName', 'vatName', 'taxName', 'physical', 'createdAtUtc']);
+                        mainGrid.obj.autoFitColumns(['name', 'number', 'barcode', 'unitPrice', 'productGroupName', 'unitMeasureName', 'vatName', 'physical', 'createdAtUtc']);
                     },
                     excelExportComplete: () => { },
                     rowSelected: () => {
@@ -582,7 +582,7 @@
                                 state.productGroupId = selectedRecord.productGroupId ?? '';
                                 state.unitMeasureId = selectedRecord.unitMeasureId ?? '';
                                 state.vatId = selectedRecord.vatId ?? '';
-                                state.taxId = selectedRecord.taxId ?? '';
+                                //state.taxId = selectedRecord.taxId ?? '';
                                 state.physical = selectedRecord.physical ?? false;
                                 mainModal.show();
                             }
@@ -602,7 +602,7 @@
                                 state.productGroupId = selectedRecord.productGroupId ?? '';
                                 state.unitMeasureId = selectedRecord.unitMeasureId ?? '';
                                 state.vatId = selectedRecord.vatId ?? '';
-                                state.taxId = selectedRecord.taxId ?? '';
+                                //state.taxId = selectedRecord.taxId ?? '';
                                 state.physical = selectedRecord.physical ?? false;
                                 mainModal.show();
                             }
@@ -687,15 +687,15 @@
             }
         );
 
-        Vue.watch(
-            () => state.taxId,
-            (newVal, oldVal) => {
-                state.errors.taxId = '';
-                if (taxListLookup.obj) {
-                    taxListLookup.refresh();
-                }
-            }
-        );
+        //Vue.watch(
+        //    () => state.taxId,
+        //    (newVal, oldVal) => {
+        //        state.errors.taxId = '';
+        //        if (taxListLookup.obj) {
+        //            taxListLookup.refresh();
+        //        }
+        //    }
+        //);
 
         Vue.onMounted(async () => {
             try {
@@ -719,8 +719,8 @@
                 await methods.populateVatListLookupData();
                 vatListLookup.create();
 
-                await methods.populateTaxListLookupData();
-                taxListLookup.create();
+                //await methods.populateTaxListLookupData();
+                //taxListLookup.create();
 
                 // Create form controls
                 nameText.create();
@@ -760,7 +760,7 @@
             productGroupIdRef,
             unitMeasureIdRef,
             vatIdRef,
-            taxIdRef,
+            //taxIdRef,
             nameRef,
             numberRef,
             barcodeRef,

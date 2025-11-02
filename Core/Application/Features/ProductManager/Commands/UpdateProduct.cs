@@ -22,7 +22,7 @@ public class UpdateProductRequest : IRequest<UpdateProductResult>
     public string? ProductGroupId { get; init; }
     public string? UpdatedById { get; init; }
     public string? VatId { get; init; }        // Added VAT
-    public string? TaxId { get; init; }        // Added Tax
+    //public string? TaxId { get; init; }        // Added Tax
 }
 
 public class UpdateProductValidator : AbstractValidator<UpdateProductRequest>
@@ -36,7 +36,7 @@ public class UpdateProductValidator : AbstractValidator<UpdateProductRequest>
         RuleFor(x => x.UnitMeasureId).NotEmpty();
         RuleFor(x => x.ProductGroupId).NotEmpty();
         RuleFor(x => x.VatId).NotEmpty();      // Added VAT validation
-        RuleFor(x => x.TaxId).NotEmpty();      // Added Tax validation
+        //RuleFor(x => x.TaxId).NotEmpty();      // Added Tax validation
     }
 }
 
