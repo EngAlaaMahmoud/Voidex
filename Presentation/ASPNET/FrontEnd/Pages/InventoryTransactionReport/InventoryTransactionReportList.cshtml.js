@@ -44,6 +44,13 @@
             }
         });
 
+        const numberFormat = (v) => {
+            if (v === null || v === undefined || v === '') return '';
+            const n = Number(v);
+            if (isNaN(n)) return '';
+            return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
+
         const mainGrid = {
             obj: null,
             create: async (dataSource) => {
@@ -54,7 +61,7 @@
                     allowFiltering: true,
                     allowSorting: true,
                     allowSelection: true,
-                    allowGrouping: false, // keep simple like your screenshot
+                    allowGrouping: false,
                     allowTextWrap: true,
                     allowResizing: true,
                     allowPaging: true,
@@ -75,14 +82,93 @@
                         { type: 'checkbox', width: 60 },
                         { field: 'transactionDate', headerText: 'التاريخ', width: 110, format: 'yyyy-MM-dd', textAlign: 'Center' },
                         { field: 'moduleName', headerText: 'البيان', width: 160, customAttributes: { class: 'module-cell' } },
+                        // purchase price (display normal numeric)
                         { field: 'purchasePrice', headerText: 'سعر الشراء', width: 110, textAlign: 'Right', format: 'N2' },
-                        { field: 'incoming', headerText: 'وارد(+)', width: 90, type: 'number', format: 'N2', textAlign: 'Right', customAttributes: { class: 'incoming-cell' } },
-                        { field: 'outgoing', headerText: 'منصرف(-)', width: 90, type: 'number', format: 'N2', textAlign: 'Right', customAttributes: { class: 'outgoing-cell' } },
-                        { field: 'purchaseValue', headerText: 'التكلفة', width: 110, type: 'number', format: 'N2', textAlign: 'Right' },
-                        { field: 'stock', headerText: 'الرصيد', width: 110, type: 'number', format: 'N2', textAlign: 'Right', customAttributes: { class: 'stock-cell' } },
-                        { field: 'balanceValue', headerText: 'قيمة الرصيد', width: 130, type: 'number', format: 'N2', textAlign: 'Right', customAttributes: { class: 'balance-cell' } },
+
+                        // incoming: display with leading '+' when value exists
+                        {
+                            field: 'incoming',
+                            headerText: 'وارد(+)',
+                            width: 90,
+                            textAlign: 'Right',
+                            customAttributes: { class: 'incoming-cell' },
+                            valueAccessor: function (field, data, column) {
+                                const v = data.incoming;
+                                if (v === null || v === undefined || v === '') return '';
+                                const n = Number(v);
+                                if (isNaN(n)) return '';
+                                return `+${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                            }
+                        },
+
+                        // outgoing: display with leading '-' when value exists
+                        {
+                            field: 'outgoing',
+                            headerText: 'منصرف(-)',
+                            width: 90,
+                            textAlign: 'Right',
+                            customAttributes: { class: 'outgoing-cell' },
+                            valueAccessor: function (field, data, column) {
+                                const v = data.outgoing;
+                                if (v === null || v === undefined || v === '') return '';
+                                const n = Number(v);
+                                if (isNaN(n)) return '';
+                                return `-${n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                            }
+                        },
+
+                        // purchaseValue: show trailing '-' if negative (valueAccessor only affects display)
+                        {
+                            field: 'purchaseValue',
+                            headerText: 'التكلفة',
+                            width: 110,
+                            textAlign: 'Right',
+                            valueAccessor: function (field, data, column) {
+                                const v = data.purchaseValue;
+                                if (v === null || v === undefined || v === '') return '';
+                                const n = Number(v);
+                                if (isNaN(n)) return '';
+                                if (n < 0) return `${Math.abs(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}-`;
+                                return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            }
+                        },
+
+                        // stock: trailing minus for negative, formatted
+                        {
+                            field: 'stock',
+                            headerText: 'الرصيد',
+                            width: 110,
+                            textAlign: 'Right',
+                            customAttributes: { class: 'stock-cell' },
+                            valueAccessor: function (field, data, column) {
+                                const v = data.stock;
+                                if (v === null || v === undefined || v === '') return '';
+                                const n = Number(v);
+                                if (isNaN(n)) return '';
+                                if (n < 0) return `${Math.abs(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}-`;
+                                return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            }
+                        },
+
+                        // balanceValue: trailing minus if negative
+                        {
+                            field: 'balanceValue',
+                            headerText: 'قيمة الرصيد',
+                            width: 130,
+                            textAlign: 'Right',
+                            customAttributes: { class: 'balance-cell' },
+                            valueAccessor: function (field, data, column) {
+                                const v = data.balanceValue;
+                                if (v === null || v === undefined || v === '') return '';
+                                const n = Number(v);
+                                if (isNaN(n)) return '';
+                                if (n < 0) return `${Math.abs(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}-`;
+                                return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            }
+                        },
+
                         { field: 'productNumber', headerText: 'رقم الصنف', width: 120 },
-                        { field: 'productName', headerText: 'اسم الصنف', width: 180, visible: false }, // hidden if not needed visually
+                        { field: 'productName', headerText: 'اسم الصنف', width: 180, visible: false },
                         { field: 'moduleNumber', headerText: 'رقم المستند', width: 140 },
                         { field: 'statusName', headerText: 'الحالة', width: 120, visible: false },
                         { field: 'movementDate', headerText: 'Movement Date', width: 150, format: 'yyyy-MM-dd', visible: false },
@@ -91,6 +177,7 @@
                     aggregates: [
                         {
                             columns: [
+                                // aggregates still use underlying numeric fields
                                 { type: 'Sum', field: 'incoming', groupFooterTemplate: 'إجمالي الوارد: ${Sum}', groupCaptionTemplate: 'وارد: ${Sum}', format: 'N2' },
                                 { type: 'Sum', field: 'outgoing', groupFooterTemplate: 'إجمالي المنصرف: ${Sum}', groupCaptionTemplate: 'منصرف: ${Sum}', format: 'N2' },
                                 {
@@ -98,7 +185,6 @@
                                     field: 'stock',
                                     groupFooterTemplate: 'الرصيد: ${Custom}',
                                     customAggregate: function (data) {
-                                        // return last row stock in the grouped result (running balance)
                                         if (data && data.result && data.result.length > 0) {
                                             const last = data.result[data.result.length - 1];
                                             return last.stock ?? 0;
@@ -113,60 +199,52 @@
                     ],
                     toolbar: ['ExcelExport', 'Search', { type: 'Separator' }],
                     dataBound: function () {
-                        // auto fit and apply custom cell styling
+                        // apply row-level styling (cells already display prefixed/trailed strings via valueAccessor)
                         try {
                             mainGrid.obj.autoFitColumns();
 
-                            const rows = mainGrid.obj.element.querySelectorAll('.e-row');
-                            rows.forEach(row => {
-                                // stock cell styling (negative = red, zero = yellow)
-                                const stockCell = row.querySelector('.stock-cell');
+                            const rows = mainGrid.obj.getRows();
+                            rows.forEach(tr => {
+                                const incomingCell = tr.querySelector('.incoming-cell');
+                                if (incomingCell) {
+                                    incomingCell.style.backgroundColor = incomingCell.textContent.trim() ? '#ccffcc' : '';
+                                }
+
+                                const outgoingCell = tr.querySelector('.outgoing-cell');
+                                if (outgoingCell) {
+                                    outgoingCell.style.backgroundColor = outgoingCell.textContent.trim() ? '#ffcccc' : '';
+                                }
+
+                                const stockCell = tr.querySelector('.stock-cell');
                                 if (stockCell) {
-                                    const stockValue = parseFloat(stockCell.textContent.replace(/,/g, ''));
-                                    if (!isNaN(stockValue)) {
-                                        if (stockValue < 0) {
+                                    const raw = stockCell.textContent.replace(/,/g, '').replace('+', '').replace('-', '');
+                                    const num = Number(raw);
+                                    if (!isNaN(num)) {
+                                        if (stockCell.textContent.includes('-')) {
+                                            // negative (we display trailing '-') => mark red
                                             stockCell.style.backgroundColor = '#ffcccc';
                                             stockCell.style.fontWeight = 'bold';
-                                        } else if (stockValue === 0) {
+                                        } else if (num === 0) {
                                             stockCell.style.backgroundColor = '#ffffcc';
                                         } else {
-                                            // positive - subtle background removed
+                                            stockCell.style.backgroundColor = '';
+                                            stockCell.style.fontWeight = '';
                                         }
                                     }
                                 }
 
-                                // incoming/outgoing coloring
-                                const incomingCell = row.querySelector('.incoming-cell');
-                                if (incomingCell && incomingCell.textContent.trim()) {
-                                    incomingCell.style.backgroundColor = '#ccffcc';
-                                }
-                                const outgoingCell = row.querySelector('.outgoing-cell');
-                                if (outgoingCell && outgoingCell.textContent.trim()) {
-                                    outgoingCell.style.backgroundColor = '#ffcccc';
-                                }
-
-                                // module cell colouring based on content (example keywords)
-                                const moduleCell = row.querySelector('.module-cell');
+                                const moduleCell = tr.querySelector('.module-cell');
                                 if (moduleCell) {
                                     const txt = moduleCell.textContent.trim();
-                                    if (txt.includes('بيع')) {
-                                        moduleCell.style.backgroundColor = '#ffff66'; // yellow-ish for sales
-                                    } else if (txt.includes('شراء')) {
-                                        moduleCell.style.backgroundColor = '#cce5ff'; // blue-ish for purchase
-                                    } else if (txt.includes('تحويل')) {
-                                        moduleCell.style.backgroundColor = '#e6f7e6'; // light green for transfers
-                                    }
+                                    if (txt.includes('بيع')) moduleCell.style.backgroundColor = '#ffff66';
+                                    else if (txt.includes('شراء')) moduleCell.style.backgroundColor = '#cce5ff';
+                                    else if (txt.includes('تحويل')) moduleCell.style.backgroundColor = '#e6f7e6';
+                                    else moduleCell.style.backgroundColor = '';
                                 }
 
-                                // optional balance styling
-                                const balanceCell = row.querySelector('.balance-cell');
+                                const balanceCell = tr.querySelector('.balance-cell');
                                 if (balanceCell) {
-                                    // you can apply formatting/coloring if needed
-                                    const val = parseFloat(balanceCell.textContent.replace(/,/g, ''));
-                                    if (!isNaN(val)) {
-                                        // example: highlight large values (optional)
-                                        // if (val > 10000) balanceCell.style.backgroundColor = '#e6ffe6';
-                                    }
+                                    // balance already formatted by valueAccessor
                                 }
                             });
                         } catch (err) {
