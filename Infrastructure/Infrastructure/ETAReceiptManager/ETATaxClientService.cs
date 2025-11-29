@@ -43,6 +43,7 @@ public class ETATaxClientService : IETATaxService
                 url += $"?include={Uri.EscapeDataString(request.Include)}";
             }
 
+
             using var httpRequest = new HttpRequestMessage(HttpMethod.Get, url);
             httpRequest.Headers.Add("Authorization", $"Bearer {accessToken}");
             // if ETA requires POS headers, add them (use values from config)
