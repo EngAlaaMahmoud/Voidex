@@ -13,6 +13,13 @@ public record GetTaxListDto
     public string? Name { get; init; }
     public double? Percentage { get; init; }
     public string? Description { get; init; }
+
+    // New fields for tax register
+    public string? MainCode { get; init; }
+    public string? TypeCode { get; init; }
+    public string? SubCode { get; init; }
+    public string? TypeName { get; init; }
+
     public DateTime? CreatedAtUtc { get; init; }
 }
 
