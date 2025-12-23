@@ -16,6 +16,11 @@ public class UpdateTaxRequest : IRequest<UpdateTaxResult>
     public string? Name { get; init; }
     public double? Percentage { get; init; }
     public string? Description { get; init; }
+    // New fields for tax register
+    public string? MainCode { get; init; }
+    public string? TypeCode { get; init; }
+    public string? SubCode { get; init; }
+    public string? TypeName { get; init; }
     public string? UpdatedById { get; init; }
 }
 
@@ -58,6 +63,10 @@ public class UpdateTaxHandler : IRequestHandler<UpdateTaxRequest, UpdateTaxResul
         entity.Name = request.Name;
         entity.Percentage = request.Percentage;
         entity.Description = request.Description;
+        entity.MainCode = request.MainCode;
+        entity.TypeCode = request.TypeCode;
+        entity.SubCode = request.SubCode;
+        entity.TypeName = request.TypeName;
 
         _repository.Update(entity);
         await _unitOfWork.SaveAsync(cancellationToken);
