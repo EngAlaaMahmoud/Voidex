@@ -25,6 +25,16 @@ public class CreateProductRequest : IRequest<CreateProductResult>
     public string? CreatedById { get; init; }
     public string? VatId { get; init; }        // Added VAT
     public string? TaxId { get; init; }        // Added Tax
+    // new fields
+    public string? InternalCode { get; init; }
+    public string? GisEgsCode { get; init; }
+    public string? CompanyName { get; init; }
+    public string? Model { get; init; }
+    public double? Discount { get; init; }
+    public double? PriceAfterDiscount { get; init; }
+    public double? ServiceFee { get; init; }
+    public double? AdditionalTax { get; init; }
+    public double? AdditionalFee { get; init; }
 }
 
 public class CreateProductValidator : AbstractValidator<CreateProductRequest>
@@ -80,6 +90,15 @@ public class CreateProductHandler : IRequestHandler<CreateProductRequest, Create
         entity.VatId = request.VatId;          // Added VAT
         //entity.TaxId = request.TaxId;          // Added  Taxes
         entity.Barcode = request.Barcode;
+        entity.InternalCode = request.InternalCode;
+        entity.GisEgsCode = request.GisEgsCode;
+        entity.CompanyName = request.CompanyName;
+        entity.Model = request.Model;
+        entity.Discount = request.Discount;
+        entity.PriceAfterDiscount = request.PriceAfterDiscount;
+        entity.ServiceFee = request.ServiceFee;
+        entity.AdditionalTax = request.AdditionalTax;
+        entity.AdditionalFee = request.AdditionalFee;
 
         await _repository.CreateAsync(entity, cancellationToken);
         await _unitOfWork.SaveAsync(cancellationToken);

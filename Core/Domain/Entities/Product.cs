@@ -18,4 +18,14 @@ public class Product : BaseEntity
     public Vat? Vat { get; set; }
     //public string? TaxId { get; set; }
     //public Tax? Tax { get; set; }
+    // Additional fields for extended product table
+    public string? InternalCode { get; set; }
+    public string? GisEgsCode { get; set; }
+    public string? CompanyName { get; set; }
+    public string? Model { get; set; }
+    public double? Discount { get; set; }
+    public double? PriceAfterDiscount { get; set; }
+    public double? ServiceFee { get; set; }
+    public double? AdditionalTax { get; set; }
+    public double? AdditionalFee { get; set; }
 }

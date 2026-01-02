@@ -19,9 +19,19 @@ public class ProductConfiguration : BaseEntityConfiguration<Product>
         builder.Property(x => x.Physical).IsRequired(false);
         builder.Property(x => x.UnitMeasureId).HasMaxLength(IdConsts.MaxLength).IsRequired(false);
         builder.Property(x => x.ProductGroupId).HasMaxLength(IdConsts.MaxLength).IsRequired(false);
+        builder.Property(x => x.InternalCode).HasMaxLength(CodeConsts.MaxLength).IsRequired(false);
+        builder.Property(x => x.GisEgsCode).HasMaxLength(CodeConsts.MaxLength).IsRequired(false);
+        builder.Property(x => x.CompanyName).HasMaxLength(NameConsts.MaxLength).IsRequired(false);
+        builder.Property(x => x.Model).HasMaxLength(NameConsts.MaxLength).IsRequired(false);
+        builder.Property(x => x.Discount).IsRequired(false);
+        builder.Property(x => x.PriceAfterDiscount).IsRequired(false);
+        builder.Property(x => x.ServiceFee).IsRequired(false);
+        builder.Property(x => x.AdditionalTax).IsRequired(false);
+        builder.Property(x => x.AdditionalFee).IsRequired(false);
 
         builder.HasIndex(e => e.Name);
         builder.HasIndex(e => e.Number);
+        builder.HasIndex(e => e.InternalCode);
 
         builder.HasOne(p => p.Vat)
           .WithMany(v => v.Products)

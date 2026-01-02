@@ -4,13 +4,10 @@ namespace Domain.Entities;
 
 public class Tax : BaseEntity
 {
-    public string? Name { get; set; }
     public double? Percentage { get; set; }
     public string? Description { get; set; }
-
     // New fields for tax register
     public string? MainCode { get; set; }
-    public string? TypeCode { get; set; }
     public string? SubCode { get; set; }
     public string? TypeName { get; set; }
 

@@ -11,18 +11,14 @@ public class TaxConfiguration : BaseEntityConfiguration<Tax>
     {
         base.Configure(builder);
 
-        builder.Property(x => x.Name).HasMaxLength(NameConsts.MaxLength).IsRequired(false);
         builder.Property(x => x.Percentage).IsRequired(false);
         builder.Property(x => x.Description).HasMaxLength(DescriptionConsts.MaxLength).IsRequired(false);
 
         builder.Property(x => x.MainCode).HasMaxLength(CodeConsts.MaxLength).IsRequired(false);
-        builder.Property(x => x.TypeCode).HasMaxLength(CodeConsts.MaxLength).IsRequired(false);
         builder.Property(x => x.SubCode).HasMaxLength(CodeConsts.MaxLength).IsRequired(false);
         builder.Property(x => x.TypeName).HasMaxLength(NameConsts.MaxLength).IsRequired(false);
 
-        builder.HasIndex(e => e.Name);
         builder.HasIndex(e => e.MainCode);
-        builder.HasIndex(e => e.TypeCode);
         builder.HasIndex(e => e.SubCode);
     }
 }

@@ -12,7 +12,16 @@
             name: '',
             number: '',
             barcode: '',
+            internalCode: '',
+            gisEgsCode: '',
+            companyName: '',
+            model: '',
             unitPrice: '',
+            discount: '',
+            priceAfterDiscount: '',
+            serviceFee: '',
+            additionalTax: '',
+            additionalFee: '',
             description: '',
             productGroupId: null,
             unitMeasureId: null,
@@ -322,7 +331,16 @@
             createMainData: async (name, barcode, unitPrice, description, productGroupId, unitMeasureId, vatId, physical, createdById) => {
                 try {
                     const response = await AxiosManager.post('/Product/CreateProduct', {
-                        name, barcode, unitPrice, description, productGroupId, unitMeasureId, vatId, physical, createdById
+                        name, barcode, unitPrice, description, productGroupId, unitMeasureId, vatId, physical, createdById,
+                        internalCode: state.internalCode,
+                        gisEgsCode: state.gisEgsCode,
+                        companyName: state.companyName,
+                        model: state.model,
+                        discount: state.discount,
+                        priceAfterDiscount: state.priceAfterDiscount,
+                        serviceFee: state.serviceFee,
+                        additionalTax: state.additionalTax,
+                        additionalFee: state.additionalFee
                     });
                     return response;
                 } catch (error) {
@@ -332,7 +350,16 @@
             updateMainData: async (id, name, barcode, unitPrice, description, productGroupId, unitMeasureId, vatId, physical, updatedById) => {
                 try {
                     const response = await AxiosManager.post('/Product/UpdateProduct', {
-                        id, name, barcode, unitPrice, description, productGroupId, unitMeasureId, vatId, physical, updatedById
+                        id, name, barcode, unitPrice, description, productGroupId, unitMeasureId, vatId, physical, updatedById,
+                        internalCode: state.internalCode,
+                        gisEgsCode: state.gisEgsCode,
+                        companyName: state.companyName,
+                        model: state.model,
+                        discount: state.discount,
+                        priceAfterDiscount: state.priceAfterDiscount,
+                        serviceFee: state.serviceFee,
+                        additionalTax: state.additionalTax,
+                        additionalFee: state.additionalFee
                     });
                     return response;
                 } catch (error) {
@@ -404,6 +431,15 @@
                 const response = await services.getMainData();
                 state.mainData = response?.data?.content?.data.map(item => ({
                     ...item,
+                    internalCode: item.internalCode ?? item.InternalCode ?? '',
+                    gisEgsCode: item.gisEgsCode ?? item.GisEgsCode ?? '',
+                    companyName: item.companyName ?? item.CompanyName ?? '',
+                    model: item.model ?? item.Model ?? '',
+                    discount: item.discount ?? item.Discount ?? null,
+                    priceAfterDiscount: item.priceAfterDiscount ?? item.PriceAfterDiscount ?? null,
+                    serviceFee: item.serviceFee ?? item.ServiceFee ?? null,
+                    additionalTax: item.additionalTax ?? item.AdditionalTax ?? null,
+                    additionalFee: item.additionalFee ?? item.AdditionalFee ?? null,
                     createdAtUtc: new Date(item.createdAtUtc)
                 }));
             },
@@ -515,8 +551,16 @@
                         },
                         { field: 'name', headerText: 'Name', width: 200, minWidth: 200 },
                         { field: 'number', headerText: 'Number', width: 150, minWidth: 150 },
-                        { field: 'barcode', headerText: 'Barcode', width: 150, minWidth: 150 },
-                        { field: 'unitPrice', headerText: 'Unit Price', width: 150, format: 'N2' },
+                        { field: 'barcode', headerText: 'Barcode', width: 120, minWidth: 120 },
+                        { field: 'internalCode', headerText: 'Internal Code', width: 120 },
+                        { field: 'gisEgsCode', headerText: 'GIS / EGS Code', width: 120 },
+                        { field: 'companyName', headerText: 'Company', width: 150 },
+                        { field: 'model', headerText: 'Model', width: 150 },
+                        { field: 'unitPrice', headerText: 'Unit Price', width: 100, format: 'N2' },
+                        { field: 'discount', headerText: 'Discount', width: 100, format: 'N2' },
+                        { field: 'priceAfterDiscount', headerText: 'Price After Discount', width: 120, format: 'N2' },
+                        { field: 'serviceFee', headerText: 'Service Fee', width: 120, format: 'N2' },
+                        { field: 'additionalTax', headerText: 'Additional Tax', width: 120, format: 'N2' },
                         { field: 'productGroupName', headerText: 'Product Group', width: 150 },
                         { field: 'unitMeasureName', headerText: 'Unit Measure', width: 150 },
                         { field: 'vatName', headerText: 'VAT', width: 150 },

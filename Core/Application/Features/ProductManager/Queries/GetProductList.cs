@@ -27,6 +27,16 @@ public record GetProductListDto
     public string? TaxId { get; init; }
     public string? TaxName { get; init; }
     public double? TaxPercentage { get; init; }  // Add this
+    // new fields
+    public string? InternalCode { get; init; }
+    public string? GisEgsCode { get; init; }
+    public string? CompanyName { get; init; }
+    public string? Model { get; init; }
+    public double? Discount { get; init; }
+    public double? PriceAfterDiscount { get; init; }
+    public double? ServiceFee { get; init; }
+    public double? AdditionalTax { get; init; }
+    public double? AdditionalFee { get; init; }
 }
 
 public class GetProductListProfile : Profile
