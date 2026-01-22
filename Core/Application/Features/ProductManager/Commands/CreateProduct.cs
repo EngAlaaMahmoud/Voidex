@@ -22,6 +22,7 @@ public class CreateProductRequest : IRequest<CreateProductResult>
     public bool? Physical { get; init; } = true;
     public string? UnitMeasureId { get; init; }
     public string? ProductGroupId { get; init; }
+    public string? ProductCompanyId { get; init; }
     public string? CreatedById { get; init; }
     public string? VatId { get; init; }        // Added VAT
     public string? TaxId { get; init; }        // Added Tax
@@ -87,6 +88,7 @@ public class CreateProductHandler : IRequestHandler<CreateProductRequest, Create
         entity.Description = request.Description;
         entity.UnitMeasureId = request.UnitMeasureId;
         entity.ProductGroupId = request.ProductGroupId;
+        entity.ProductCompanyId = request.ProductCompanyId;
         entity.VatId = request.VatId;          // Added VAT
         //entity.TaxId = request.TaxId;          // Added  Taxes
         entity.Barcode = request.Barcode;

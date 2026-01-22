@@ -35,6 +35,58 @@
                                                 <input ref="nameRef" v-model="state.name">
                                                 <label class="text-danger">{{ state.errors.name }}</label>
                                             </div>
+                                            <div class="col-md-6">
+                                                <label for="Companies">Companies</label>
+                                                <div ref="companyIdsRef"></div>
+                                                <label for="CompanyNames" class="form-label mt-2">New Companies (comma separated)</label>
+                                                <input id="CompanyNames" type="text" v-model="state.companyNamesText" class="form-control" placeholder="e.g. Samsung, Apple" />
+                                            </div>
+                                        </div>
+                                        <div class="row mb-2">
+                                            <div class="col-12">
+                                                <div class="card mt-2">
+                                                    <div class="card-header">
+                                                        <h6>Company Records (add full company info)</h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="row g-2 align-items-end">
+                                                            <div class="col-md-3">
+                                                                <label>Name *</label>
+                                                                <input v-model="newCompany.name" type="text" class="form-control" placeholder="Company name" />
+                                                            </div>
+                                                            <div class="col-md-3">
+                                                                <label>Street</label>
+                                                                <input v-model="newCompany.street" type="text" class="form-control" placeholder="Street" />
+                                                            </div>
+                                                            <div class="col-md-3">
+                                                                <label>City</label>
+                                                                <input v-model="newCompany.city" type="text" class="form-control" placeholder="City" />
+                                                            </div>
+                                                            <div class="col-md-2">
+                                                                <label>Description</label>
+                                                                <input v-model="newCompany.description" type="text" class="form-control" placeholder="Description" />
+                                                            </div>
+                                                            <div class="col-md-1">
+                                                                <button type="button" class="btn btn-success" v-on:click="addCompanyRecord">Add</button>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="mt-3">
+                                                            <ul class="list-group">
+                                                                <li class="list-group-item d-flex justify-content-between align-items-start" v-for="(c, idx) in state.companyRecords" :key="idx">
+                                                                    <div>
+                                                                        <div><strong>{{ c.name }}</strong></div>
+                                                                        <div class="small text-muted">{{ c.street }} {{ c.city }}</div>
+                                                                    </div>
+                                                                    <div>
+                                                                        <button type="button" class="btn btn-sm btn-danger" v-on:click="removeCompanyRecord(idx)">Remove</button>
+                                                                    </div>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                         <div class="row mb-2">
                                             <div class="col-12">

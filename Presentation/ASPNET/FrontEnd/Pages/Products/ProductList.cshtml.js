@@ -26,6 +26,8 @@
             productGroupId: null,
             unitMeasureId: null,
             vatId: null,
+            productCompanyId: null,
+            productCompanyMap: {},
             //taxId: null,
             physical: false,
             errors: {
@@ -90,6 +92,9 @@
                         popupHeight: '200px',
                         change: (e) => {
                             state.productGroupId = e.value;
+                            console.log('productGroup changed to', e.value);
+                            // populate product companies from local map (no network)
+                            methods.populateProductCompaniesFromMap(e.value);
                         }
                     });
                     productGroupListLookup.obj.appendTo(productGroupIdRef.value);
@@ -102,6 +107,47 @@
                     productGroupListLookup.obj.value = state.productGroupId;
                 }
             },
+        };
+
+        // product company lookup for selected group
+        const productCompanyLookup = {
+            obj: null,
+            create: (dataSource) => {
+                // destroy existing first
+                productCompanyLookup.destroy();
+                const elem = document.getElementById('productCompanyPlaceholder');
+                if (!elem) return;
+                // create a fresh input element inside placeholder
+                elem.innerHTML = '<input id="productCompanyElem" />';
+                const list = Array.isArray(dataSource) ? dataSource : [];
+                productCompanyLookup.obj = new ej.dropdowns.DropDownList({
+                    dataSource: list,
+                    fields: { value: 'id', text: 'name' },
+                    placeholder: 'Select Product Company',
+                    popupHeight: '200px',
+                    enabled: list.length > 0,
+                    change: (e) => {
+                        state.productCompanyId = e.value;
+                    }
+                });
+                productCompanyLookup.obj.appendTo(document.getElementById('productCompanyElem'));
+                // set initial value from state
+                try { productCompanyLookup.obj.value = state.productCompanyId; } catch (err) { }
+            },
+            refresh: () => {
+                if (productCompanyLookup.obj) {
+                    try { productCompanyLookup.obj.value = state.productCompanyId; } catch (err) { }
+                }
+            }
+            ,
+            destroy: () => {
+                if (productCompanyLookup.obj) {
+                    try { productCompanyLookup.obj.destroy(); } catch (err) { }
+                    productCompanyLookup.obj = null;
+                }
+                const elem = document.getElementById('productCompanyPlaceholder');
+                if (elem) elem.innerHTML = '';
+            }
         };
 
         const unitMeasureListLookup = {
@@ -305,6 +351,7 @@
             state.unitPrice = '';
             state.description = '';
             state.productGroupId = null;
+            state.productCompanyId = null;
             state.unitMeasureId = null;
             state.vatId = null;
             //state.taxId = null;
@@ -331,7 +378,7 @@
             createMainData: async (name, barcode, unitPrice, description, productGroupId, unitMeasureId, vatId, physical, createdById) => {
                 try {
                     const response = await AxiosManager.post('/Product/CreateProduct', {
-                        name, barcode, unitPrice, description, productGroupId, unitMeasureId, vatId, physical, createdById,
+                        name, barcode, unitPrice, description, productGroupId, productCompanyId: state.productCompanyId, unitMeasureId, vatId, physical, createdById,
                         internalCode: state.internalCode,
                         gisEgsCode: state.gisEgsCode,
                         companyName: state.companyName,
@@ -350,7 +397,7 @@
             updateMainData: async (id, name, barcode, unitPrice, description, productGroupId, unitMeasureId, vatId, physical, updatedById) => {
                 try {
                     const response = await AxiosManager.post('/Product/UpdateProduct', {
-                        id, name, barcode, unitPrice, description, productGroupId, unitMeasureId, vatId, physical, updatedById,
+                        id, name, barcode, unitPrice, description, productGroupId, productCompanyId: state.productCompanyId, unitMeasureId, vatId, physical, updatedById,
                         internalCode: state.internalCode,
                         gisEgsCode: state.gisEgsCode,
                         companyName: state.companyName,
@@ -379,6 +426,14 @@
             getProductGroupListLookupData: async () => {
                 try {
                     const response = await AxiosManager.get('/ProductGroup/GetProductGroupList', {});
+                    return response;
+                } catch (error) {
+                    throw error;
+                }
+            },
+            getProductCompaniesByGroup: async (groupId) => {
+                try {
+                    const response = await AxiosManager.get('/ProductGroup/GetProductCompaniesByGroup?groupId=' + groupId, {});
                     return response;
                 } catch (error) {
                     throw error;
@@ -414,6 +469,8 @@
             populateProductGroupListLookupData: async () => {
                 const response = await services.getProductGroupListLookupData();
                 state.productGroupListLookupData = response?.data?.content?.data;
+                // also clear product company selection
+                state.productCompanyId = null;
             },
             populateUnitMeasureListLookupData: async () => {
                 const response = await services.getUnitMeasureListLookupData();
@@ -422,6 +479,50 @@
             populateVatListLookupData: async () => {
                 const response = await services.getVatListLookupData();
                 state.vatListLookupData = response?.data?.content?.data;
+            },
+
+            populateProductCompaniesByGroup: async (groupId) => {
+                if (!groupId) return;
+                try {
+                    const resp = await services.getProductCompaniesByGroup(groupId);
+                    console.log('GetProductCompaniesByGroup response', resp);
+                    const items = resp?.data?.content?.data ?? [];
+                    if (!items || !items.length) {
+                        console.warn('No product companies returned for group', groupId, items);
+                    }
+                    // render dropdown placeholder
+                    const placeholder = document.getElementById('productCompanyPlaceholder');
+                    if (placeholder) placeholder.innerHTML = '';
+                    // fallback: if API returned empty, try to build items from loaded productGroupListLookupData (companyIds + companyNames)
+                    let finalItems = items;
+                    if ((!finalItems || !finalItems.length) && Array.isArray(state.productGroupListLookupData)) {
+                        const grp = state.productGroupListLookupData.find(g => g.id === groupId);
+                        if (grp && Array.isArray(grp.companyIds) && grp.companyIds.length) {
+                            const names = (grp.companyNames || '').split(',').map(s => s.trim()).filter(s => s.length);
+                            finalItems = grp.companyIds.map((id, idx) => ({ id, name: names[idx] ?? '' }));
+                        }
+                    }
+
+                    productCompanyLookup.create(finalItems || []);
+                } catch (err) {
+                    console.error('failed loading product companies for group', err);
+                }
+            },
+
+            populateProductCompaniesFromMap: async (groupId) => {
+                if (!groupId) return;
+                const mapping = state.productCompanyMap || {};
+                const items = mapping[groupId] || [];
+                if (!items || !items.length) {
+                    // try to build from productGroupListLookupData
+                    const grp = state.productGroupListLookupData.find(g => g.id === groupId);
+                    if (grp && Array.isArray(grp.companyIds) && grp.companyIds.length) {
+                        const names = (grp.companyNames || '').split(',').map(s => s.trim()).filter(s => s.length);
+                        productCompanyLookup.create(grp.companyIds.map((id, idx) => ({ id, name: names[idx] ?? '' })));
+                        return;
+                    }
+                }
+                productCompanyLookup.create(items);
             },
             //populateTaxListLookupData: async () => {
             //    const response = await services.getTaxListLookupData();
@@ -555,6 +656,7 @@
                         { field: 'internalCode', headerText: 'Internal Code', width: 120 },
                         { field: 'gisEgsCode', headerText: 'GIS / EGS Code', width: 120 },
                         { field: 'companyName', headerText: 'Company', width: 150 },
+                        { field: 'productCompanyName', headerText: 'Product Company', width: 150 },
                         { field: 'model', headerText: 'Model', width: 150 },
                         { field: 'unitPrice', headerText: 'Unit Price', width: 100, format: 'N2' },
                         { field: 'discount', headerText: 'Discount', width: 100, format: 'N2' },
@@ -609,6 +711,8 @@
                             state.deleteMode = false;
                             state.mainTitle = 'Add Product';
                             resetFormState();
+                            // ensure any previous product company dropdown is cleared
+                            productCompanyLookup.destroy();
                             mainModal.show();
                         }
 
@@ -623,11 +727,18 @@
                                 state.barcode = selectedRecord.barcode ?? '';
                                 state.unitPrice = selectedRecord.unitPrice ?? '';
                                 state.description = selectedRecord.description ?? '';
-                                state.productGroupId = selectedRecord.productGroupId ?? '';
+                            state.productGroupId = selectedRecord.productGroupId ?? '';
+                            state.productCompanyId = selectedRecord.productCompanyId ?? null;
                                 state.unitMeasureId = selectedRecord.unitMeasureId ?? '';
                                 state.vatId = selectedRecord.vatId ?? '';
                                 //state.taxId = selectedRecord.taxId ?? '';
                                 state.physical = selectedRecord.physical ?? false;
+                                // populate product companies for this group then show modal so dropdown appears with selected value
+                                try {
+                                    await methods.populateProductCompaniesByGroup(state.productGroupId);
+                                } catch (e) {
+                                    console.error('failed to populate product companies on edit', e);
+                                }
                                 mainModal.show();
                             }
                         }
@@ -756,6 +867,16 @@
                 // Load lookup data
                 await methods.populateProductGroupListLookupData();
                 productGroupListLookup.create();
+                console.log('productGroupListLookupData', state.productGroupListLookupData);
+                // build local productCompanyMap from loaded productGroupListLookupData
+                state.productCompanyMap = {};
+                state.productGroupListLookupData.forEach(g => {
+                    if (g && Array.isArray(g.companyIds) && g.companyIds.length) {
+                        const names = (g.companyNames || '').split(',').map(s => s.trim()).filter(s => s.length);
+                        state.productCompanyMap[g.id] = g.companyIds.map((id, idx) => ({ id, name: names[idx] ?? '' }));
+                    }
+                });
+                console.log('productCompanyMap', state.productCompanyMap);
 
                 await methods.populateUnitMeasureListLookupData();
                 unitMeasureListLookup.create();

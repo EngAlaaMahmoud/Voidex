@@ -16,6 +16,24 @@ public class ProductGroupController : BaseApiController
     }
 
     [Authorize]
+    [HttpGet("GetProductCompaniesByGroup")]
+    public async Task<ActionResult<ApiSuccessResult<GetProductGroupListResult>>> GetProductCompaniesByGroup(
+        CancellationToken cancellationToken,
+        [FromQuery] string groupId = ""
+        )
+    {
+        var request = new GetProductCompaniesByGroupRequest { GroupId = groupId };
+        var response = await _sender.Send(request, cancellationToken);
+
+        return Ok(new ApiSuccessResult<GetProductCompaniesByGroupResult>
+        {
+            Code = StatusCodes.Status200OK,
+            Message = $"Success executing {nameof(GetProductCompaniesByGroup)}",
+            Content = response
+        });
+    }
+
+    [Authorize]
     [HttpPost("CreateProductGroup")]
     public async Task<ActionResult<ApiSuccessResult<CreateProductGroupResult>>> CreateProductGroupAsync(CreateProductGroupRequest request, CancellationToken cancellationToken)
     {

@@ -17,24 +17,25 @@ public class CompanySeeder
     }
     public async Task GenerateDataAsync()
     {
-        var entity = new Company
-        {
-            CreatedAtUtc = DateTime.UtcNow,
-            IsDeleted = false,
-            Name = "Acme Corp",
-            Currency = "USD",
-            Street = "123 Main St",
-            City = "Metropolis",
-            State = "New York",
-            ZipCode = "10001",
-            Country = "USA",
-            PhoneNumber = "+1-212-555-1234",
-            FaxNumber = "+1-212-555-5678",
-            EmailAddress = "info@acmecorp.com",
-            Website = "https://www.acmecorp.com"
-        };
+        // Seed a minimal set of companies (names only) if they do not exist yet
+        var companyNames = new[] { "Acme Corp", "Samsung", "Apple", "Nokia", "Huawei" };
 
-        await _repository.CreateAsync(entity);
+        foreach (var name in companyNames)
+        {
+            var exists = _repository.GetQuery().Any(x => x.Name == name);
+            if (!exists)
+            {
+                var entity = new Company
+                {
+                    CreatedAtUtc = DateTime.UtcNow,
+                    IsDeleted = false,
+                    Name = name
+                };
+
+                await _repository.CreateAsync(entity);
+            }
+        }
+
         await _unitOfWork.SaveAsync();
     }
 

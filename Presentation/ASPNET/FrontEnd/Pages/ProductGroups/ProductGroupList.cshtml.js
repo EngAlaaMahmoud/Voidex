@@ -7,15 +7,22 @@
             id: '',
             name: '',
             description: '',
+            companyIds: [],
+            companyListLookupData: [],
+            companyNamesText: '',
+            companyRecords: [],
             errors: {
                 name: ''
             },
             isSubmitting: false
         });
 
+        const newCompany = Vue.reactive({ name: '', street: '', city: '', description: '' });
+
         const mainGridRef = Vue.ref(null);
         const mainModalRef = Vue.ref(null);
         const nameRef = Vue.ref(null);
+        const companyIdsRef = Vue.ref(null);
 
         const nameText = {
             obj: null,
@@ -30,6 +37,23 @@
                     nameText.obj.value = state.name;
                 }
             }
+        };
+
+        const addCompanyRecord = () => {
+            if (!newCompany.name || !newCompany.name.trim()) {
+                Swal.fire({ icon: 'warning', title: 'Name required', text: 'Company name is required.' });
+                return;
+            }
+
+            state.companyRecords.push({ name: newCompany.name.trim(), street: newCompany.street?.trim(), city: newCompany.city?.trim(), description: newCompany.description?.trim() });
+            newCompany.name = '';
+            newCompany.street = '';
+            newCompany.city = '';
+            newCompany.description = '';
+        };
+
+        const removeCompanyRecord = (idx) => {
+            state.companyRecords.splice(idx, 1);
         };
 
         Vue.watch(
@@ -57,6 +81,8 @@
             state.id = '';
             state.name = '';
             state.description = '';
+            state.companyIds = [];
+            state.companyNamesText = '';
             state.errors = {
                 name: ''
             };
@@ -71,20 +97,22 @@
                     throw error;
                 }
             },
-            createMainData: async (name, description, createdById) => {
+            createMainData: async (name, description, createdById, companyRecords) => {
                 try {
+                    const companyNames = (state.companyNamesText || '').split(',').map(s => s.trim()).filter(s => s.length);
                     const response = await AxiosManager.post('/ProductGroup/CreateProductGroup', {
-                        name, description, createdById
+                        name, description, companyIds: state.companyIds, companyNames, companyRecords, createdById
                     });
                     return response;
                 } catch (error) {
                     throw error;
                 }
             },
-            updateMainData: async (id, name, description, updatedById) => {
+            updateMainData: async (id, name, description, updatedById, companyRecords) => {
                 try {
+                    const companyNames = (state.companyNamesText || '').split(',').map(s => s.trim()).filter(s => s.length);
                     const response = await AxiosManager.post('/ProductGroup/UpdateProductGroup', {
-                        id, name, description, updatedById
+                        id, name, description, companyIds: state.companyIds, companyNames, companyRecords, updatedById
                     });
                     return response;
                 } catch (error) {
@@ -101,6 +129,14 @@
                     throw error;
                 }
             },
+            getCompanyListLookupData: async () => {
+                try {
+                    const response = await AxiosManager.get('/Company/GetCompanyList', {});
+                    return response;
+                } catch (error) {
+                    throw error;
+                }
+            },
         };
 
         const methods = {
@@ -108,9 +144,34 @@
                 const response = await services.getMainData();
                 state.mainData = response?.data?.content?.data.map(item => ({
                     ...item,
+                    companyIds: item.companyIds ?? [],
+                    companyNames: item.companyNames ?? '',
                     createdAtUtc: new Date(item.createdAtUtc)
                 }));
             },
+        };
+
+        const companyListLookup = {
+            obj: null,
+            create: () => {
+                if (state.companyListLookupData && Array.isArray(state.companyListLookupData)) {
+                    companyListLookup.obj = new ej.dropdowns.MultiSelect({
+                        dataSource: state.companyListLookupData,
+                        fields: { value: 'id', text: 'name' },
+                        placeholder: 'Select Companies',
+                        mode: 'Box',
+                        change: (e) => {
+                            state.companyIds = e.value;
+                        }
+                    });
+                    companyListLookup.obj.appendTo(companyIdsRef.value);
+                }
+            },
+            refresh: () => {
+                if (companyListLookup.obj) {
+                    companyListLookup.obj.value = state.companyIds;
+                }
+            }
         };
 
         const handler = {
@@ -123,11 +184,14 @@
                         return;
                     }
 
+                    // build companyRecords DTOs to send to backend
+                    const companyRecordsDto = (state.companyRecords || []).map(c => ({ name: c.name, street: c.street, city: c.city, description: c.description }));
+
                     const response = state.id === ''
-                        ? await services.createMainData(state.name, state.description, StorageManager.getUserId())
+                        ? await services.createMainData(state.name, state.description, StorageManager.getUserId(), companyRecordsDto)
                         : state.deleteMode
                             ? await services.deleteMainData(state.id, StorageManager.getUserId())
-                            : await services.updateMainData(state.id, state.name, state.description, StorageManager.getUserId());
+                            : await services.updateMainData(state.id, state.name, state.description, StorageManager.getUserId(), companyRecordsDto);
 
                     if (response.data.code === 200) {
                         await methods.populateMainData();
@@ -194,8 +258,12 @@
                 await methods.populateMainData();
                 await mainGrid.create(state.mainData);
 
+                // load company lookup data and create multi-select
+                const compResp = await services.getCompanyListLookupData();
+                state.companyListLookupData = compResp?.data?.content?.data ?? [];
                 nameText.create();
                 mainModal.create();
+                companyListLookup.create();
                 mainModalRef.value?.addEventListener('hidden.bs.modal', () => {
                     resetFormState();
                 });
@@ -239,6 +307,7 @@
                         },
                         { field: 'name', headerText: 'Name', width: 200, minWidth: 200 },
                         { field: 'description', headerText: 'Description', width: 400, minWidth: 400 },
+                        { field: 'companyNames', headerText: 'Companies', width: 200 },
                         { field: 'createdAtUtc', headerText: 'Created At UTC', width: 150, format: 'yyyy-MM-dd HH:mm' }
                     ],
                     toolbar: [
@@ -283,6 +352,10 @@
                             state.deleteMode = false;
                             state.mainTitle = 'Add Product Group';
                             resetFormState();
+                            state.companyIds = [];
+                            state.companyNamesText = '';
+                            // refresh lookup after reset
+                            setTimeout(() => companyListLookup.refresh(), 50);
                             mainModal.obj.show();
                         }
 
@@ -294,6 +367,9 @@
                                 state.id = selectedRecord.id ?? '';
                                 state.name = selectedRecord.name ?? '';
                                 state.description = selectedRecord.description ?? '';
+                                state.companyIds = selectedRecord.companyIds ?? [];
+                                state.companyNamesText = selectedRecord.companyNames ?? '';
+                                setTimeout(() => companyListLookup.refresh(), 50);
                                 mainModal.obj.show();
                             }
                         }
@@ -333,8 +409,12 @@
             mainGridRef,
             mainModalRef,
             nameRef,
+            companyIdsRef,
+            newCompany,
             state,
             handler,
+            addCompanyRecord,
+            removeCompanyRecord,
         };
     }
 };

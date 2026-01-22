@@ -20,6 +20,8 @@ public record GetProductListDto
     public string? UnitMeasureName { get; init; }
     public string? ProductGroupId { get; init; }
     public string? ProductGroupName { get; init; }
+    public string? ProductCompanyId { get; init; }
+    public string? ProductCompanyName { get; init; }
     public DateTime? CreatedAtUtc { get; init; }
     public string? VatId { get; init; }
     public string? VatName { get; init; }
@@ -51,6 +53,10 @@ public class GetProductListProfile : Profile
             .ForMember(
                 dest => dest.ProductGroupName,
                 opt => opt.MapFrom(src => src.ProductGroup != null ? src.ProductGroup.Name : string.Empty)
+            )
+            .ForMember(
+                dest => dest.ProductCompanyName,
+                opt => opt.MapFrom(src => src.ProductCompany != null ? src.ProductCompany.Name : string.Empty)
             )
             .ForMember(
                 dest => dest.VatName,

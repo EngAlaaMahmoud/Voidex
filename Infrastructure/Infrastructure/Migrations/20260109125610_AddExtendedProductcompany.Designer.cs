@@ -4,6 +4,7 @@ using Infrastructure.DataAccessManager.EFCore.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20260109125610_AddExtendedProductcompany")]
+    partial class AddExtendedProductcompany
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -778,9 +781,6 @@ namespace Infrastructure.Migrations
                     b.Property<double?>("PriceAfterDiscount")
                         .HasColumnType("float");
 
-                    b.Property<string>("ProductCompanyId")
-                        .HasColumnType("nvarchar(50)");
-
                     b.Property<string>("ProductGroupId")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
@@ -815,8 +815,6 @@ namespace Infrastructure.Migrations
                     b.HasIndex("Name");
 
                     b.HasIndex("Number");
-
-                    b.HasIndex("ProductCompanyId");
 
                     b.HasIndex("ProductGroupId");
 
@@ -2382,10 +2380,6 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Product", b =>
                 {
-                    b.HasOne("Domain.Entities.ProductCompany", "ProductCompany")
-                        .WithMany()
-                        .HasForeignKey("ProductCompanyId");
-
                     b.HasOne("Domain.Entities.ProductGroup", "ProductGroup")
                         .WithMany()
                         .HasForeignKey("ProductGroupId");
@@ -2402,8 +2396,6 @@ namespace Infrastructure.Migrations
                         .WithMany("Products")
                         .HasForeignKey("VatId")
                         .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("ProductCompany");
 
                     b.Navigation("ProductGroup");
 

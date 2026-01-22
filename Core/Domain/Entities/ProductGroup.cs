@@ -6,4 +6,5 @@ public class ProductGroup : BaseEntity
 {
     public string? Name { get; set; }
     public string? Description { get; set; }
+    public ICollection<ProductCompany>? ProductCompanies { get; set; } = new List<ProductCompany>();
 }

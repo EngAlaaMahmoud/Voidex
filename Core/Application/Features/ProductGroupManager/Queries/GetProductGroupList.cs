@@ -1,4 +1,5 @@
 ﻿using Application.Common.CQS.Queries;
+using System.Linq;
 using Application.Common.Extensions;
 using AutoMapper;
 using Domain.Entities;
@@ -12,6 +13,8 @@ public record GetProductGroupListDto
     public string? Id { get; init; }
     public string? Name { get; init; }
     public string? Description { get; init; }
+    public List<string>? CompanyIds { get; init; }
+    public string? CompanyNames { get; init; }
     public DateTime? CreatedAtUtc { get; init; }
 }
 
@@ -19,7 +22,9 @@ public class GetProductGroupListProfile : Profile
 {
     public GetProductGroupListProfile()
     {
-        CreateMap<ProductGroup, GetProductGroupListDto>();
+        CreateMap<ProductGroup, GetProductGroupListDto>()
+            .ForMember(dest => dest.CompanyIds, opt => opt.MapFrom(src => src.ProductCompanies != null ? src.ProductCompanies.Select(c => c.Id).ToList() : new List<string>()))
+            .ForMember(dest => dest.CompanyNames, opt => opt.MapFrom(src => src.ProductCompanies != null ? string.Join(", ", src.ProductCompanies.Select(c => c.Name)) : string.Empty));
     }
 }
 
@@ -51,6 +56,7 @@ public class GetProductGroupListHandler : IRequestHandler<GetProductGroupListReq
             .ProductGroup
             .AsNoTracking()
             .ApplyIsDeletedFilter(request.IsDeleted)
+            .Include(x => x.ProductCompanies)
             .AsQueryable();
 
         var entities = await query.ToListAsync(cancellationToken);

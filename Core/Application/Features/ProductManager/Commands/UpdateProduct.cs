@@ -20,6 +20,7 @@ public class UpdateProductRequest : IRequest<UpdateProductResult>
     public bool? Physical { get; init; } = true;
     public string? UnitMeasureId { get; init; }
     public string? ProductGroupId { get; init; }
+    public string? ProductCompanyId { get; init; }
     public string? UpdatedById { get; init; }
     public string? VatId { get; init; }        // Added VAT
     //public string? TaxId { get; init; }        // Added Tax
@@ -82,6 +83,7 @@ public class UpdateProductHandler : IRequestHandler<UpdateProductRequest, Update
         entity.Description = request.Description;
         entity.UnitMeasureId = request.UnitMeasureId;
         entity.ProductGroupId = request.ProductGroupId;
+        entity.ProductCompanyId = request.ProductCompanyId;
         entity.VatId = request.VatId;          // Added VAT
         //entity.TaxId = request.TaxId;          // Added 
         entity.Barcode = request.Barcode;

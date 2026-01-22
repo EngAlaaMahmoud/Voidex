@@ -4,6 +4,7 @@ using Infrastructure.DataAccessManager.EFCore.Contexts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(DataContext))]
-    partial class DataContextModelSnapshot : ModelSnapshot
+    [Migration("20260108205159_AddProductcompanyFields")]
+    partial class AddProductcompanyFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -72,6 +75,9 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
+                    b.Property<string>("ProductGroupId")
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<string>("State")
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
@@ -96,6 +102,8 @@ namespace Infrastructure.Migrations
                         .HasColumnType("nvarchar(50)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ProductGroupId");
 
                     b.ToTable("Company");
                 });
@@ -778,9 +786,6 @@ namespace Infrastructure.Migrations
                     b.Property<double?>("PriceAfterDiscount")
                         .HasColumnType("float");
 
-                    b.Property<string>("ProductCompanyId")
-                        .HasColumnType("nvarchar(50)");
-
                     b.Property<string>("ProductGroupId")
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
@@ -816,8 +821,6 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("Number");
 
-                    b.HasIndex("ProductCompanyId");
-
                     b.HasIndex("ProductGroupId");
 
                     b.HasIndex("TaxId");
@@ -827,55 +830,6 @@ namespace Infrastructure.Migrations
                     b.HasIndex("VatId");
 
                     b.ToTable("Product");
-                });
-
-            modelBuilder.Entity("Domain.Entities.ProductCompany", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("City")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<DateTime?>("CreatedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("CreatedById")
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(4000)
-                        .HasColumnType("nvarchar(4000)");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("Street")
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<DateTime?>("UpdatedAtUtc")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UpdatedById")
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name");
-
-                    b.ToTable("ProductCompany");
                 });
 
             modelBuilder.Entity("Domain.Entities.ProductGroup", b =>
@@ -2311,19 +2265,11 @@ namespace Infrastructure.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("ProductCompanyProductGroup", b =>
+            modelBuilder.Entity("Domain.Entities.Company", b =>
                 {
-                    b.Property<string>("ProductCompaniesId")
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("ProductGroupsId")
-                        .HasColumnType("nvarchar(50)");
-
-                    b.HasKey("ProductCompaniesId", "ProductGroupsId");
-
-                    b.HasIndex("ProductGroupsId");
-
-                    b.ToTable("ProductCompanyProductGroup");
+                    b.HasOne("Domain.Entities.ProductGroup", null)
+                        .WithMany("Companies")
+                        .HasForeignKey("ProductGroupId");
                 });
 
             modelBuilder.Entity("Domain.Entities.CustomerContact", b =>
@@ -2382,10 +2328,6 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Product", b =>
                 {
-                    b.HasOne("Domain.Entities.ProductCompany", "ProductCompany")
-                        .WithMany()
-                        .HasForeignKey("ProductCompanyId");
-
                     b.HasOne("Domain.Entities.ProductGroup", "ProductGroup")
                         .WithMany()
                         .HasForeignKey("ProductGroupId");
@@ -2402,8 +2344,6 @@ namespace Infrastructure.Migrations
                         .WithMany("Products")
                         .HasForeignKey("VatId")
                         .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("ProductCompany");
 
                     b.Navigation("ProductGroup");
 
@@ -2639,19 +2579,9 @@ namespace Infrastructure.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("ProductCompanyProductGroup", b =>
+            modelBuilder.Entity("Domain.Entities.ProductGroup", b =>
                 {
-                    b.HasOne("Domain.Entities.ProductCompany", null)
-                        .WithMany()
-                        .HasForeignKey("ProductCompaniesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.ProductGroup", null)
-                        .WithMany()
-                        .HasForeignKey("ProductGroupsId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Navigation("Companies");
                 });
 
             modelBuilder.Entity("Domain.Entities.PurchaseOrder", b =>
