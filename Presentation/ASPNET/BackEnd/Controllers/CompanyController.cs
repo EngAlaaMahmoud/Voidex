@@ -65,6 +65,20 @@ public class CompanyController : BaseApiController
         });
     }
 
+    [Authorize]
+    [HttpGet("GetProductCompanyList")]
+    public async Task<ActionResult<ApiSuccessResult<Application.Features.ProductCompanyManager.Queries.GetProductCompanyListResult>>> GetProductCompanyListAsync(CancellationToken cancellationToken)
+    {
+        var request = new Application.Features.ProductCompanyManager.Queries.GetProductCompanyListRequest();
+        var response = await _sender.Send(request, cancellationToken);
+        return Ok(new ApiSuccessResult<Application.Features.ProductCompanyManager.Queries.GetProductCompanyListResult>
+        {
+            Code = StatusCodes.Status200OK,
+            Message = "Success executing GetProductCompanyList",
+            Content = response
+        });
+    }
+
 
 }
 

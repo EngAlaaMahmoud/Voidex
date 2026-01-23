@@ -14,14 +14,10 @@
             barcode: '',
             internalCode: '',
             gisEgsCode: '',
-            companyName: '',
             model: '',
-            unitPrice: '',
-            discount: '',
-            priceAfterDiscount: '',
-            serviceFee: '',
-            additionalTax: '',
-            additionalFee: '',
+            unitPrice: 0,
+            discount: 0,
+            priceAfterDiscount: 0,
             description: '',
             productGroupId: null,
             unitMeasureId: null,
@@ -80,6 +76,9 @@
             }
         };
 
+        // ensure refs for discount and priceAfterDiscount targets
+        // (these are created in DOM with ref attributes inside template)
+
         // Define lookup objects
         const productGroupListLookup = {
             obj: null,
@@ -133,6 +132,14 @@
                 productCompanyLookup.obj.appendTo(document.getElementById('productCompanyElem'));
                 // set initial value from state
                 try { productCompanyLookup.obj.value = state.productCompanyId; } catch (err) { }
+                // attach clear button
+                const clearBtn = document.getElementById('productCompanyClearBtn');
+                if (clearBtn) {
+                    clearBtn.onclick = () => {
+                        try { productCompanyLookup.obj.value = null; } catch {}
+                        state.productCompanyId = null;
+                    };
+                }
             },
             refresh: () => {
                 if (productCompanyLookup.obj) {
@@ -295,6 +302,7 @@
             }
         };
 
+
         const unitPriceNumber = {
             obj: null,
             create: () => {
@@ -304,13 +312,23 @@
                     format: 'N2',
                     min: 0
                 });
-                unitPriceNumber.obj.appendTo(unitPriceRef.value);
+                // append to input element
+                const el = unitPriceRef.value;
+                if (el) unitPriceNumber.obj.appendTo(el);
             },
             refresh: () => {
                 if (unitPriceNumber.obj) {
                     unitPriceNumber.obj.value = state.unitPrice;
                 }
             }
+        };
+
+        // use simple inputs for discount and price after discount (no extra widgets)
+
+        const calculatePriceAfterDiscount = () => {
+            const p = Number(state.unitPrice) || 0;
+            const d = Number(state.discount) || 0;
+            return Math.max(0, p - d);
         };
 
         const validateForm = function () {
@@ -348,14 +366,14 @@
             state.name = '';
             state.number = '';
             state.barcode = '';
-            state.unitPrice = '';
+            state.unitPrice = 0;
             state.description = '';
             state.productGroupId = null;
             state.productCompanyId = null;
             state.unitMeasureId = null;
             state.vatId = null;
             //state.taxId = null;
-            state.physical = false;
+            state.physical = true; // default selected for Add
             state.errors = {
                 name: '',
                 unitPrice: '',
@@ -364,6 +382,7 @@
                 vatId: '',
                 //taxId: ''
             };
+            // removed service/additional fields
         };
 
         const services = {
@@ -381,11 +400,9 @@
                         name, barcode, unitPrice, description, productGroupId, productCompanyId: state.productCompanyId, unitMeasureId, vatId, physical, createdById,
                         internalCode: state.internalCode,
                         gisEgsCode: state.gisEgsCode,
-                        companyName: state.companyName,
                         model: state.model,
                         discount: state.discount,
                         priceAfterDiscount: state.priceAfterDiscount,
-                        serviceFee: state.serviceFee,
                         additionalTax: state.additionalTax,
                         additionalFee: state.additionalFee
                     });
@@ -400,11 +417,9 @@
                         id, name, barcode, unitPrice, description, productGroupId, productCompanyId: state.productCompanyId, unitMeasureId, vatId, physical, updatedById,
                         internalCode: state.internalCode,
                         gisEgsCode: state.gisEgsCode,
-                        companyName: state.companyName,
                         model: state.model,
                         discount: state.discount,
                         priceAfterDiscount: state.priceAfterDiscount,
-                        serviceFee: state.serviceFee,
                         additionalTax: state.additionalTax,
                         additionalFee: state.additionalFee
                     });
@@ -656,13 +671,12 @@
                         { field: 'internalCode', headerText: 'Internal Code', width: 120 },
                         { field: 'gisEgsCode', headerText: 'GIS / EGS Code', width: 120 },
                         { field: 'companyName', headerText: 'Company', width: 150 },
-                        { field: 'productCompanyName', headerText: 'Product Company', width: 150 },
+                        { field: 'productCompanyName', headerText: 'Company Name', width: 150 },
                         { field: 'model', headerText: 'Model', width: 150 },
                         { field: 'unitPrice', headerText: 'Unit Price', width: 100, format: 'N2' },
                         { field: 'discount', headerText: 'Discount', width: 100, format: 'N2' },
                         { field: 'priceAfterDiscount', headerText: 'Price After Discount', width: 120, format: 'N2' },
-                        { field: 'serviceFee', headerText: 'Service Fee', width: 120, format: 'N2' },
-                        { field: 'additionalTax', headerText: 'Additional Tax', width: 120, format: 'N2' },
+                        // additionalTax removed from grid
                         { field: 'productGroupName', headerText: 'Product Group', width: 150 },
                         { field: 'unitMeasureName', headerText: 'Unit Measure', width: 150 },
                         { field: 'vatName', headerText: 'VAT', width: 150 },
@@ -809,6 +823,15 @@
                 if (unitPriceNumber.obj) {
                     unitPriceNumber.refresh();
                 }
+                // recalc price after discount
+                state.priceAfterDiscount = calculatePriceAfterDiscount();
+            }
+        );
+
+        Vue.watch(
+            () => state.discount,
+            (newVal, oldVal) => {
+                state.priceAfterDiscount = calculatePriceAfterDiscount();
             }
         );
 
@@ -892,6 +915,7 @@
                 numberText.create();
                 barcodeText.create();
                 unitPriceNumber.create();
+                // discount and priceAfterDiscount use native inputs
 
                 // Add modal event listener
                 if (mainModalRef.value) {
@@ -917,6 +941,9 @@
             if (mainModalRef.value) {
                 mainModalRef.value.removeEventListener('hidden.bs.modal', resetFormState);
             }
+            // destroy numeric widgets
+            try { discountNumber.destroy?.(); } catch {}
+            try { priceAfterDiscountNumber.destroy?.(); } catch {}
         });
 
         return {

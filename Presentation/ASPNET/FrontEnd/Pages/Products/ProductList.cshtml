@@ -39,17 +39,13 @@
                                                 <input ref="numberRef" v-model="state.number" readonly>
                                             </div>
                                         </div>
-                                        <div class="row mb-2">
-                                            <div class="col-md-6">
-                                                <label for="Barcode">Barcode</label>
-                                                <input ref="barcodeRef" type="text" class="form-control" placeholder="Scan or enter barcode" v-model="state.barcode">
-                                            </div>
-                                            <div class="col-md-6">
-                                                <label for="UnitPrice">Unit Price</label>
-                                                <input ref="unitPriceRef" v-model="state.unitPrice">
-                                                <label class="text-danger">{{ state.errors.unitPrice }}</label>
-                                            </div>
-                                        </div>
+                <div class="row mb-2">
+                    <div class="col-md-6">
+                        <label for="Barcode">Barcode</label>
+                        <input ref="barcodeRef" type="text" class="form-control" placeholder="Scan or enter barcode" v-model="state.barcode">
+                    </div>
+                    <!-- Unit Price moved to the inline pricing row below -->
+                </div>
                 <div class="row mb-3">
                     <div class="col-md-4">
                         <label for="InternalCode">Internal Code</label>
@@ -59,31 +55,30 @@
                         <label for="GisEgsCode">GIS / EGS Code</label>
                         <input type="text" v-model="state.gisEgsCode" class="form-control" />
                     </div>
-                    <div class="col-md-4">
-                        <label for="CompanyName">Company Name</label>
-                        <input type="text" v-model="state.companyName" class="form-control" />
-                    </div>
+                    <!-- Company Name removed from product modal -->
                 </div>
                 <div class="row mb-3">
                     <div class="col-md-4">
                         <label for="Model">Model / الوصف</label>
-                        <input type="text" v-model="state.model" class="form-control" />
+                        <textarea v-model="state.model" id="Model" name="Model" class="form-control" rows="3" style="width:100%"></textarea>
                     </div>
-                    <div class="col-md-2">
-                        <label for="Discount">Discount</label>
-                        <input type="number" step="0.01" v-model="state.discount" class="form-control" />
-                    </div>
-                    <div class="col-md-2">
-                        <label for="PriceAfterDiscount">Price After Discount</label>
-                        <input type="number" step="0.01" v-model="state.priceAfterDiscount" class="form-control" />
-                    </div>
-                    <div class="col-md-2">
-                        <label for="ServiceFee">Service Fee</label>
-                        <input type="number" step="0.01" v-model="state.serviceFee" class="form-control" />
-                    </div>
-                    <div class="col-md-2">
-                        <label for="AdditionalTax">Additional Tax</label>
-                        <input type="number" step="0.01" v-model="state.additionalTax" class="form-control" />
+                    <div class="col-md-8">
+                        <div class="row g-2 align-items-end">
+                            <div class="col-4">
+                                <label for="UnitPrice">Unit Price</label>
+                                <input ref="unitPriceRef" class="form-control form-control-sm" v-model="state.unitPrice" />
+                                <label class="text-danger small">{{ state.errors.unitPrice }}</label>
+                            </div>
+                            <div class="col-4">
+                                <label for="Discount">Discount</label>
+                                <input ref="discountInputRef" class="form-control form-control-sm" v-model.number="state.discount" />
+                            </div>
+                            <div class="col-4">
+                                <label for="PriceAfterDiscount">Price After Discount</label>
+                                <input ref="priceAfterDiscountRefInput" class="form-control form-control-sm" v-model="state.priceAfterDiscount" readonly />
+                            </div>
+                        </div>
+                        <!-- Service Fee / Additional Tax / Additional Fee removed -->
                     </div>
                 </div>
                                         <div class="row mb-2">
@@ -95,8 +90,11 @@
                                             <div class="col-md-6">
                                                 <label for="ProductGroupId">Product Group</label>
                                                 <div ref="productGroupIdRef"></div>
-                                            <label for="ProductCompanyId">Product Company</label>
-                                            <div id="productCompanyPlaceholder"></div>
+                                            <label for="ProductCompanyId">Company Name</label>
+                                            <div class="d-flex align-items-center">
+                                                <div id="productCompanyPlaceholder"></div>
+                                                <button type="button" id="productCompanyClearBtn" class="btn btn-sm btn-outline-secondary ms-2">Clear</button>
+                                            </div>
                                                 <label class="text-danger">{{ state.errors.productGroupId }}</label>
                                             </div>
                                         </div>
@@ -123,7 +121,7 @@
                                         <div class="row mb-2">
                                             <div class="col-12">
                                                 <label for="Description">Description</label>
-                                                <textarea v-model="state.description" id="Description" name="Description" class="form-control" rows="3"></textarea>
+                                                <textarea v-model="state.description" id="Description" name="Description" class="form-control form-control-sm" rows="4" style="width:100%; font-size:0.9rem"></textarea>
                                             </div>
                                         </div>
                                     </div>

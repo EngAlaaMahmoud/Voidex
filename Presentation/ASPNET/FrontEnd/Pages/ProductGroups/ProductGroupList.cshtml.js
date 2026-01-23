@@ -45,7 +45,18 @@
                 return;
             }
 
-            state.companyRecords.push({ name: newCompany.name.trim(), street: newCompany.street?.trim(), city: newCompany.city?.trim(), description: newCompany.description?.trim() });
+            const record = { name: newCompany.name.trim(), street: newCompany.street?.trim(), city: newCompany.city?.trim(), description: newCompany.description?.trim() };
+            state.companyRecords.push(record);
+            // if new company name matches existing product company, add its id to selection immediately
+            const match = (state.companyListLookupData || []).find(c => c.name && c.name.toLowerCase() === record.name.toLowerCase());
+            if (match) {
+                if (!state.companyIds.includes(match.id)) {
+                    state.companyIds.push(match.id);
+                    setTimeout(() => companyListLookup.refresh(), 50);
+                }
+            }
+            // sync companyNamesText to reflect current selection
+            syncCompanyNamesTextFromIds();
             newCompany.name = '';
             newCompany.street = '';
             newCompany.city = '';
@@ -53,7 +64,16 @@
         };
 
         const removeCompanyRecord = (idx) => {
+            const rec = state.companyRecords[idx];
             state.companyRecords.splice(idx, 1);
+            // if removed record matches existing company, remove its id from selection
+            const match = (state.companyListLookupData || []).find(c => c.name && rec.name && c.name.toLowerCase() === rec.name.toLowerCase());
+            if (match) {
+                state.companyIds = (state.companyIds || []).filter(id => id !== match.id);
+                setTimeout(() => companyListLookup.refresh(), 50);
+            }
+            // sync companyNamesText to reflect current selection
+            syncCompanyNamesTextFromIds();
         };
 
         Vue.watch(
@@ -63,6 +83,41 @@
                 nameText.refresh();
             }
         );
+
+        // when the comma-separated "New Companies" text changes, sync selections
+        Vue.watch(
+            () => state.companyNamesText,
+            (newVal, oldVal) => {
+                const names = (newVal || '').split(',').map(s => s.trim()).filter(s => s.length);
+                const lookup = state.companyListLookupData || [];
+                // determine desired ids from names that match existing product companies
+                const desiredIds = [];
+                names.forEach(n => {
+                    const match = lookup.find(c => c.name && c.name.toLowerCase() === n.toLowerCase());
+                    if (match && !desiredIds.includes(match.id)) desiredIds.push(match.id);
+                });
+                // update state.companyIds to reflect desired ids
+                state.companyIds = desiredIds;
+                // ensure companyRecords contain entries for selected ids
+                desiredIds.forEach(id => {
+                    const comp = lookup.find(c => c.id === id);
+                    if (comp) {
+                        const exists = state.companyRecords.find(r => r._linkedId === id || (r.name && r.name.toLowerCase() === comp.name.toLowerCase()));
+                        if (!exists) state.companyRecords.push({ name: comp.name, street: '', city: '', description: '', _linkedId: comp.id });
+                    }
+                });
+                // remove companyRecords that were linked but are no longer present in desiredIds
+                state.companyRecords = state.companyRecords.filter(r => !r._linkedId || desiredIds.includes(r._linkedId));
+                // refresh multiselect UI
+                setTimeout(() => companyListLookup.refresh(), 50);
+            }
+        );
+
+        const syncCompanyNamesTextFromIds = () => {
+            const lookup = state.companyListLookupData || [];
+            const names = (state.companyIds || []).map(id => lookup.find(c => c.id === id)?.name).filter(n => n);
+            state.companyNamesText = names.join(', ');
+        };
 
         const validateForm = function () {
             state.errors.name = '';
@@ -131,7 +186,8 @@
             },
             getCompanyListLookupData: async () => {
                 try {
-                    const response = await AxiosManager.get('/Company/GetCompanyList', {});
+                    // load product companies (ProductCompany table) for product-group company selection
+                    const response = await AxiosManager.get('/Company/GetProductCompanyList', {});
                     return response;
                 } catch (error) {
                     throw error;
@@ -160,9 +216,22 @@
                         fields: { value: 'id', text: 'name' },
                         placeholder: 'Select Companies',
                         mode: 'Box',
-                        change: (e) => {
-                            state.companyIds = e.value;
-                        }
+                    change: (e) => {
+                        state.companyIds = e.value;
+                        // sync companyRecords: ensure companyRecords contains entries for selected ids if missing
+                        const selectedIds = e.value || [];
+                        selectedIds.forEach(id => {
+                            const existing = state.companyRecords.find(r => r._linkedId === id || (r.name && (state.companyListLookupData.find(c=>c.id===id)?.name || '').toLowerCase() === r.name.toLowerCase()));
+                            if (!existing) {
+                                const comp = state.companyListLookupData.find(c => c.id === id);
+                                if (comp) state.companyRecords.push({ name: comp.name, street: '', city: '', description: '', _linkedId: comp.id });
+                            }
+                        });
+                        // remove companyRecords for ids that are no longer selected (only those with _linkedId)
+                        state.companyRecords = state.companyRecords.filter(r => !r._linkedId || selectedIds.includes(r._linkedId));
+                        // update the comma-separated textbox to reflect selected company names
+                        syncCompanyNamesTextFromIds();
+                    }
                     });
                     companyListLookup.obj.appendTo(companyIdsRef.value);
                 }
@@ -258,7 +327,7 @@
                 await methods.populateMainData();
                 await mainGrid.create(state.mainData);
 
-                // load company lookup data and create multi-select
+                // load product companies lookup data and create multi-select
                 const compResp = await services.getCompanyListLookupData();
                 state.companyListLookupData = compResp?.data?.content?.data ?? [];
                 nameText.create();
