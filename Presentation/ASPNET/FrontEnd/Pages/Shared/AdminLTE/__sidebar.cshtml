@@ -48,17 +48,9 @@
             const firstSegment = currentUrl.split('/')[1];
 
             function filterMenu(menuData, userRoles) {
-                const childMenus = menuData.filter(menu => {
-                    if (menu.navURL) {
-                        const firstSegment = menu.navURL.split('/')[1];
-                        return userRoles.some(role => role.toLowerCase() === firstSegment.toLowerCase());
-                    }
-                    return false;
-                });
-
-                const validChildIds = new Set(childMenus.map(menu => menu.id));
-                const parentIds = new Set(childMenus.map(menu => menu.pid));
-                return menuData.filter(menu => validChildIds.has(menu.id) || parentIds.has(menu.id));
+                // Do not filter by roles by default; return full menu tree.
+                // If role-based filtering is required, menu items must include role metadata.
+                return menuData;
             }
 
             function updateMenuSelection(menuData, segment) {
@@ -89,7 +81,39 @@
             }
 
             const userRoles = StorageManager.getUserRoles();
-            let menuData = StorageManager.getMenuNavigation();
+            let menuData = StorageManager.getMenuNavigation() || [];
+            // normalize menu items to expected lower-cased field names for TreeView
+            menuData = (menuData || []).map(item => ({
+                id: item.id ?? item.Id,
+                name: item.name ?? item.Name ?? '',
+                pid: item.pid ?? item.Pid ?? null,
+                navURL: item.navURL ?? item.NavURL ?? item.NavUrl ?? null,
+                hasChild: item.hasChild ?? item.HasChild ?? false,
+                expanded: item.expanded ?? item.Expanded ?? false,
+                isSelected: item.isSelected ?? item.IsSelected ?? false
+            }));
+            // ensure Product Companies menu exists (in case stored menu navigation is outdated)
+            try {
+                const exists = menuData.some(m => (m.navURL || '').toLowerCase() === '/productcompanies/productcompanylist');
+                if (!exists) {
+                    // find Inventory parent
+                    const inventory = menuData.find(m => (m.name || '').toLowerCase() === 'inventory');
+                    const maxId = menuData.reduce((acc, cur) => Math.max(acc, Number(cur.id) || 0), 0) + 1;
+                    const newNode = {
+                        id: String(maxId),
+                        name: 'Product Companies',
+                        pid: inventory ? inventory.id : null,
+                        navURL: '/ProductCompanies/ProductCompanyList',
+                        hasChild: false,
+                        expanded: false,
+                        isSelected: false
+                    };
+                    menuData.push(newNode);
+                }
+            } catch (err) {
+                console.error('Failed to ensure Product Companies menu exists', err);
+            }
+
             const filteredMenu = filterMenu(menuData, userRoles);
             menuData = updateMenuSelection(filteredMenu, firstSegment);
 

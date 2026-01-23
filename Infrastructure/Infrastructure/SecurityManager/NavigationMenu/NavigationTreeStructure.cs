@@ -82,6 +82,11 @@ public static class NavigationTreeStructure
                     "Name": "Unit Measure",
                     "IsModule": false
                 },
+                        {
+                            "URL": "/ProductCompanies/ProductCompanyList",
+                            "Name": "Product Companies",
+                            "IsModule": false
+                        },
                 {
                     "URL": "/ProductGroups/ProductGroupList",
                     "Name": "Product Group",

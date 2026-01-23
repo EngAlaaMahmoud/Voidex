@@ -1,0 +1,67 @@
+@page
+@{
+    ViewData["Title"] = "Product Company List";
+}
+
+<div id="app" v-cloak>
+    <div class="row">
+        <div class="col-12">
+            <div class="grid-container">
+                <div ref="mainGridRef"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" ref="mainModalRef" id="MainModal" aria-hidden="true" tabindex="-1" data-bs-focus="false" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ state.mainTitle }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" v-model="state.id" />
+                    <form id="MainForm">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-header"><h5>Product Company</h5></div>
+                                    <div class="card-body">
+                                        <div class="row mb-2">
+                                            <div class="col-md-6">
+                                                <label>Name</label>
+                                                <input ref="nameRef" type="text" v-model="state.name" class="form-control" />
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label>City</label>
+                                                <input v-model="state.city" type="text" class="form-control" />
+                                            </div>
+                                        </div>
+                                        <div class="row mb-2">
+                                            <div class="col-md-6">
+                                                <label>Street</label>
+                                                <input v-model="state.street" type="text" class="form-control" />
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label>Description</label>
+                                                <input v-model="state.description" type="text" class="form-control" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" v-on:click="handler.handleSubmit">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="~/FrontEnd/Pages/ProductCompanies/ProductCompanyList.cshtml.js"></script>
+}
