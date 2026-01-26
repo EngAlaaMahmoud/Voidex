@@ -43,7 +43,7 @@ public class GetSalesOrderListProfile : Profile
                 dest => dest.OrderStatusName,
                 opt => opt.MapFrom(src => src.OrderStatus.HasValue ? src.OrderStatus.Value.ToFriendlyName() : string.Empty)
             )
-            .ForMember(dest => dest.TaxName, opt => opt.MapFrom(src => src.Tax != null ? src.Tax.TypeName : "None")); ;
+            .ForMember(dest => dest.TaxName, opt => opt.MapFrom(src => src.Tax != null ? src.Tax.TaxType : "None")); ;
     }
 }
 
