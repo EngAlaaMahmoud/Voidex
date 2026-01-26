@@ -16,7 +16,7 @@ public class TaxConfiguration : BaseEntityConfiguration<Tax>
 
         builder.Property(x => x.MainCode).HasMaxLength(CodeConsts.MaxLength).IsRequired(false);
         builder.Property(x => x.SubCode).HasMaxLength(CodeConsts.MaxLength).IsRequired(false);
-        builder.Property(x => x.TypeName).HasMaxLength(NameConsts.MaxLength).IsRequired(false);
+        builder.Property(x => x.TaxType).HasMaxLength(NameConsts.MaxLength).IsRequired(false);
 
         builder.HasIndex(e => e.MainCode);
         builder.HasIndex(e => e.SubCode);

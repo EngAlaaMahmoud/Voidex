@@ -19,7 +19,7 @@ public class UpdateTaxRequest : IRequest<UpdateTaxResult>
     // New fields for tax register
     public string? MainCode { get; init; }
     public string? SubCode { get; init; }
-    public string? TypeName { get; init; }
+    public string? TaxType { get; init; }
     public string? UpdatedById { get; init; }
 }
 
@@ -62,7 +62,7 @@ public class UpdateTaxHandler : IRequestHandler<UpdateTaxRequest, UpdateTaxResul
         entity.Description = request.Description;
         entity.MainCode = request.MainCode;
         entity.SubCode = request.SubCode;
-        entity.TypeName = request.TypeName;
+        entity.TaxType = request.TaxType;
 
         _repository.Update(entity);
         await _unitOfWork.SaveAsync(cancellationToken);

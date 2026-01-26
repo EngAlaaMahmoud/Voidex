@@ -18,7 +18,7 @@ public record GetTaxListDto
     public string? MainCode { get; init; }
     public string? TypeCode { get; init; }
     public string? SubCode { get; init; }
-    public string? TypeName { get; init; }
+    public string? TaxType { get; init; }
 
     public DateTime? CreatedAtUtc { get; init; }
 }

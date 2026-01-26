@@ -9,7 +9,7 @@ public class Tax : BaseEntity
     // New fields for tax register
     public string? MainCode { get; set; }
     public string? SubCode { get; set; }
-    public string? TypeName { get; set; }
+    public string? TaxType { get; set; }
 
     public virtual ICollection<SalesOrderTax> SalesOrderTaxes { get; set; } = new List<SalesOrderTax>();
     public virtual ICollection<PurchaseOrderTax> PurchaseOrderTaxes { get; set; } = new List<PurchaseOrderTax>();
