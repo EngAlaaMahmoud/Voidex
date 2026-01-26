@@ -1,7 +1,8 @@
 ﻿const SecurityManager = {
     authorizePage: async (requiredRoles) => {
         const userRoles = StorageManager.getUserRoles();
-        const isAuthorized = userRoles?.some(role => requiredRoles.includes(role));
+        const isAuthorized = Array.isArray(userRoles) && userRoles.some(role => requiredRoles.includes(role));
+
         if (!isAuthorized) {
             Swal.fire({
                 icon: 'error',
@@ -15,6 +16,8 @@
             }, 2000);
         }
 
+        // IMPORTANT: return boolean so callers can check result
+        return !!isAuthorized;
     },
 
     validateToken: async () => {

@@ -10,6 +10,10 @@ public record GetProductCompanyListDto
 {
     public string? Id { get; init; }
     public string? Name { get; init; }
+    public string? Street { get; init; }      // <-- add these
+    public string? City { get; init; }
+    public string? Description { get; init; }
+    public DateTime? CreatedAtUtc { get; init; }
 }
 
 public class GetProductCompanyListProfile : Profile

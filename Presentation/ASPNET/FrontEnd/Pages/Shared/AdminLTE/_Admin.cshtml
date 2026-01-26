@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
@@ -78,7 +78,7 @@
         document.addEventListener('DOMContentLoaded', async function () {
             async function getCompany() {
                 try {
-                    const response = await AxiosManager.get('/Company/GetCompanyList', {});
+                    const response = await AxiosManager.get('/ProductCompany/GetProductCompanyList', {});
                     const data = response?.data?.content?.data;
                     
                     if (data && data.length > 0) {
@@ -90,7 +90,7 @@
                         const currency = data[0]?.currency ?? '---';
 
                         document.getElementById('footerContent').innerHTML =
-                            `© ${year} <a href="${companyWeb}">${companyName}</a>, All Right Reserved.`;
+                            `� ${year} <a href="${companyWeb}">${companyName}</a>, All Right Reserved.`;
                         document.getElementById('topbarContent').innerHTML =
                             `Currency: ${currency}`;
                     }
