@@ -133,23 +133,34 @@ public class SecurityController : BaseApiController
         });
     }
 
-    [Authorize]
+    [AllowAnonymous]
     [HttpPost("ValidateToken")]
     public async Task<ActionResult<ApiSuccessResult<ValidateTokenResult>>> ValidateTokenAsync(
         ValidateTokenRequest request,
         CancellationToken cancellationToken
         )
     {
-        var response = await _sender.Send(request, cancellationToken);
+        // If JWT middleware populated the user principal, treat token as valid.
+        if (HttpContext?.User?.Identity?.IsAuthenticated == true)
+        {
+            var response = await _sender.Send(request, cancellationToken);
 
+            return Ok(new ApiSuccessResult<ValidateTokenResult>
+            {
+                Code = StatusCodes.Status200OK,
+                Message = $"Success executing {nameof(ValidateTokenAsync)}",
+                Content = response
+            });
+        }
+
+        // Not authenticated
         return Ok(new ApiSuccessResult<ValidateTokenResult>
         {
-            Code = StatusCodes.Status200OK,
-            Message = $"Success executing {nameof(ValidateTokenAsync)}",
-            Content = response
+            Code = StatusCodes.Status401Unauthorized,
+            Message = "Token not valid",
+            Content = null
         });
     }
-
 
     [Authorize]
     [HttpGet("GetMyProfileList")]

@@ -37,11 +37,39 @@ public class DeleteProductCompanyHandler : IRequestHandler<DeleteProductCompanyR
 
     public async Task<DeleteProductCompanyResult> Handle(DeleteProductCompanyRequest request, CancellationToken cancellationToken)
     {
+        // if not found, return null result instead of throwing
         var entity = await _repository.GetAsync(request.Id ?? string.Empty, cancellationToken);
-        if (entity == null) throw new Exception($"Entity not found: {request.Id}");
+        if (entity == null)
+        {
+            return new DeleteProductCompanyResult { Data = null };
+        }
 
-        _repository.Delete(entity);
-        await _unitOfWork.SaveAsync(cancellationToken);
+        // prefer soft-delete if entity contains IsDeleted flag; otherwise delete
+        try
+        {
+            var prop = entity.GetType().GetProperty("IsDeleted");
+            if (prop != null)
+            {
+                prop.SetValue(entity, true);
+                var updatedByProp = entity.GetType().GetProperty("UpdatedById");
+                var updatedAtProp = entity.GetType().GetProperty("UpdatedAtUtc");
+                if (updatedByProp != null) updatedByProp.SetValue(entity, request.DeletedById);
+                if (updatedAtProp != null) updatedAtProp.SetValue(entity, DateTime.UtcNow);
+                _repository.Update(entity);
+            }
+            else
+            {
+                _repository.Delete(entity);
+            }
+
+            await _unitOfWork.SaveAsync(cancellationToken);
+        }
+        catch
+        {
+            // fallback: attempt delete if update fails
+            _repository.Delete(entity);
+            await _unitOfWork.SaveAsync(cancellationToken);
+        }
 
         return new DeleteProductCompanyResult { Data = entity };
     }

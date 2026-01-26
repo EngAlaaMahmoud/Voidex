@@ -1,6 +1,11 @@
-﻿<!DOCTYPE html>
-<html lang="en">
-
+@using System.Globalization
+@{
+    var uiCulture = CultureInfo.CurrentUICulture;
+    var lang = uiCulture.Name ?? "en";
+    var dir = uiCulture.TwoLetterISOLanguageName == "ar" ? "rtl" : "ltr";
+}
+<!DOCTYPE html>
+<html lang="@lang" dir="@dir">
 <head>
     <meta charset="utf-8">
     <title>WHMS - .NET 9 - Warehouse & Inventory Management System</title>
@@ -8,13 +13,15 @@
     <meta content="" name="keywords">
     <meta content="" name="description">
 
-
     @await Html.PartialAsync("__css")
     @await RenderSectionAsync("Styles", required: false)
 </head>
 
 <body>
     @RenderBody()
+
+    <!-- Add the __js partial to load all required libraries globally -->
+    @await Html.PartialAsync("AdminLTE/__js")
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

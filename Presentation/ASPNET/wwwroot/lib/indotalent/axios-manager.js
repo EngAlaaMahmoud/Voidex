@@ -1,4 +1,4 @@
-﻿const AxiosManager = (() => {
+const AxiosManager = (() => {
     const axiosInstance = axios.create({
         baseURL: '/api',
         headers: {
@@ -12,15 +12,14 @@
 
     axiosInstance.interceptors.request.use(
         (config) => {
-            const token = StorageManager.getAccessToken(); 
+            const token = StorageManager.getAccessToken();
             if (token) {
+                config.headers = config.headers || {};
                 config.headers['Authorization'] = `Bearer ${token}`;
             }
             return config;
         },
-        (error) => {
-            return Promise.reject(error);
-        }
+        (error) => Promise.reject(error)
     );
 
     axiosInstance.interceptors.response.use(
@@ -65,15 +64,18 @@
 
     const request = async (method, url, data = {}, customHeaders = {}, responseType = 'json') => {
         try {
-            const response = await axiosInstance({
+            // Merge custom headers with any existing defaults; let interceptors still run and add Authorization
+            const config = {
                 method,
                 url,
                 data,
-                headers: {
-                    ...customHeaders,
-                },
                 responseType,
-            });
+                headers: {
+                    ...(customHeaders || {})
+                }
+            };
+
+            const response = await axiosInstance.request(config);
             return response;
         } catch (error) {
             throw error;
