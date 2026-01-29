@@ -24,10 +24,10 @@ namespace Infrastructure.DataAccessManager.EFCore.Configurations
             //    .WithMany(so => so.SalesOrderTaxes)
             //    .HasForeignKey(st => st.SalesOrderId);
 
-            builder
-                .HasOne(st => st.Tax)
-                .WithMany(t => t.SalesOrderTaxes)
-                .HasForeignKey(st => st.TaxId);
+            //builder
+            //    .HasOne(st => st.Tax)
+            //    .WithMany(t => t.SalesOrderTaxes)
+            //    .HasForeignKey(st => st.TaxId);
         }
     }
 }

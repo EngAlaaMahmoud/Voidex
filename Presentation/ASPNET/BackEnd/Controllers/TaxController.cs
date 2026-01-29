@@ -76,6 +76,22 @@ public class TaxController : BaseApiController
         });
     }
 
+    [HttpGet("GetTaxCategories")]
+    public async Task<IActionResult> GetTaxCategories([FromQuery] bool isDeleted = false)
+    {
+        var request = new GetTaxCategoriesRequest { IsDeleted = isDeleted };
+        var result = await _sender.Send(request);
+
+        return Ok(new
+        {
+            code = 200,
+            content = new
+            {
+                data = result.Data
+            }
+        });
+    }
+
 
 }
 

@@ -38,10 +38,13 @@
                                                 <input type="text" v-model="state.subCode" class="form-control" />
                                             </div>
                                         </div>
+
+                                        <!-- Changed: Tax Category Dropdown instead of free text -->
                                         <div class="row mb-3">
                                             <div class="col-md-6">
-                                                <label for="TaxType">Tax Type</label>
-                                                <input type="text" v-model="state.taxType" class="form-control" />
+                                                <label for="TaxCategoryId">Tax Category</label>
+                                                <div id="taxCategoryContainer"></div> <!-- Added wrapper -->
+                                                <label class="text-danger">{{ state.errors.taxCategoryId }}</label>
                                             </div>
                                             <div class="col-md-6">
                                                 <label for="Percentage">Percentage</label>
@@ -52,11 +55,19 @@
                                                 <label class="text-danger">{{ state.errors.percentage }}</label>
                                             </div>
                                         </div>
+
+                                        <!-- Keep TaxType as read-only or optional display (if still needed for legacy) -->
+                                        <div class="row mb-3" v-if="state.taxType">
+                                            <div class="col-12">
+                                                <label>Current Tax Type (legacy)</label>
+                                                <input type="text" v-model="state.taxType" class="form-control" readonly />
+                                            </div>
+                                        </div>
+
                                         <div class="row mb-3">
                                             <div class="col-12">
                                                 <label for="Description">Description</label>
                                                 <textarea id="Description" v-model="state.description" class="form-control" rows="3"></textarea>
-                                                <label class="text-danger">{{ state.errors.description }}</label>
                                             </div>
                                         </div>
                                     </div>

@@ -28,6 +28,8 @@ public interface IEntityDbSet
     public DbSet<CustomerContact> CustomerContact { get; set; }
     public DbSet<VendorContact> VendorContact { get; set; }
     public DbSet<Tax> Tax { get; set; }
+    public DbSet<TaxCategory> TaxCategory { get; set; }
+    public DbSet<ProductTax> ProductTaxes { get; set; }
     public DbSet<Vat> Vats { get; set; }
     public DbSet<SalesOrder> SalesOrder { get; set; }
     public DbSet<SalesOrderTax> SalesOrderTaxes { get; set; }

@@ -21,13 +21,20 @@ public record GetTaxListDto
     public string? TaxType { get; init; }
 
     public DateTime? CreatedAtUtc { get; init; }
+    public string? TaxCategoryId { get; init; }
+    public string? TaxCategoryName { get; init; }  // ← add this
+    // NEW - category fields
+    public string? TaxCategoryCode { get; init; }
 }
 
 public class GetTaxListProfile : Profile
 {
     public GetTaxListProfile()
     {
-        CreateMap<Tax, GetTaxListDto>();
+        CreateMap<Tax, GetTaxListDto>()
+            .ForMember(dest => dest.TaxCategoryId, opt => opt.MapFrom(src => src.TaxCategory != null ? src.TaxCategory.Id : null))
+            .ForMember(dest => dest.TaxCategoryCode, opt => opt.MapFrom(src => src.TaxCategory != null ? src.TaxCategory.Code : null))
+            .ForMember(dest => dest.TaxCategoryName, opt => opt.MapFrom(src => src.TaxCategory != null ? src.TaxCategory.NameAr : null)); ;
     }
 }
 
@@ -58,6 +65,7 @@ public class GetTaxListHandler : IRequestHandler<GetTaxListRequest, GetTaxListRe
         var query = _context
             .Tax
             .AsNoTracking()
+            .Include(t => t.TaxCategory)
             .ApplyIsDeletedFilter(request.IsDeleted)
             .AsQueryable();
 

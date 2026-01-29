@@ -124,6 +124,97 @@
                                                 <textarea v-model="state.description" id="Description" name="Description" class="form-control form-control-sm" rows="4" style="width:100%; font-size:0.9rem"></textarea>
                                             </div>
                                         </div>
+
+                                        <div class="card mb-3">
+                                            <div class="card-header">
+                                                <h5>Taxes</h5>
+                                                <button type="button" class="btn btn-sm btn-outline-primary" v-on:click="addTaxRow">
+                                                    + Add Tax
+                                                </button>
+                                            </div>
+                                            <div class="card-body">
+                                                <div class="table-responsive">
+                                                    <table class="table table-bordered table-sm">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Main Code</th>
+                                                                <th>Sub Code</th>
+                                                                <th>Tax Category</th>
+                                                                <th>Percentage</th>
+                                                                <th>Tax Value</th>
+                                                                <th>Action</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr v-for="(tax, index) in state.productTaxes" :key="index">
+                                                                <td>
+                                                                    <select v-model="tax.taxMainCode" class="form-control form-control-sm"
+                                                                            v-on:change="onTaxMainCodeChange(index)">
+                                                                        <option value="">Select Main Code</option>
+                                                                        <option v-for="mainCode in getUniqueMainCodes()"
+                                                                                :key="mainCode"
+                                                                                :value="mainCode">
+                                                                            {{ mainCode }}
+                                                                        </option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <select v-model="tax.taxSubCode" class="form-control form-control-sm"
+                                                                            :disabled="!tax.taxMainCode"
+                                                                            v-on:change="onTaxSubCodeChange(index)">
+                                                                        <option value="">Select Sub Code</option>
+                                                                        <option v-for="subCode in getSubCodesByMainCode(tax.taxMainCode)"
+                                                                                :key="subCode.code"
+                                                                                :value="subCode.code">
+                                                                            {{ subCode.code }} - {{ subCode.description }}
+                                                                        </option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" v-model="tax.taxCategoryName"
+                                                                           class="form-control form-control-sm" readonly />
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" v-model="tax.percentage"
+                                                                           class="form-control form-control-sm text-end" readonly />
+                                                                </td>
+                                                                <td>
+                                                                    <input type="number" v-model="tax.taxValue"
+                                                                           class="form-control form-control-sm text-end" readonly />
+                                                                    <small class="text-muted">Calculated: {{ formatCurrency(tax.taxValue) }}</small>
+                                                                </td>
+                                                                <td>
+                                                                    <button type="button" class="btn btn-sm btn-danger"
+                                                                            v-on:click="removeTaxRow(index)">
+                                                                        ×
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                        <tfoot v-if="state.productTaxes.length > 0">
+                                                            <tr>
+                                                                <td colspan="3" class="text-end"><strong>Total Taxes:</strong></td>
+                                                                <td class="text-end">
+                                                                    <strong>{{ calculateTotalTaxPercentage().toFixed(2) }}%</strong>
+                                                                </td>
+                                                                <td class="text-end">
+                                                                    <strong>{{ formatCurrency(calculateTotalTaxValue()) }}</strong>
+                                                                </td>
+                                                                <td></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td colspan="5" class="text-end"><strong>Price After Taxes:</strong></td>
+                                                                <td class="text-end">
+                                                                    <strong>{{ formatCurrency(calculatePriceAfterTaxes()) }}</strong>
+                                                                </td>
+                                                            </tr>
+                                                        </tfoot>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+
+
                                     </div>
                                 </div>
                             </div>

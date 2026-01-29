@@ -16,8 +16,9 @@ public class CreateTaxRequest : IRequest<CreateTaxResult>
     public string? Description { get; init; }
     // New fields for tax register
     public string? MainCode { get; init; }
+    public string? TaxCategoryId { get; init; }   // ← instead of TaxType
     public string? SubCode { get; init; }
-    public string? TaxType { get; init; }
+    //public string? TaxType { get; init; }
     public string? CreatedById { get; init; }
 }
 
@@ -52,7 +53,8 @@ public class CreateTaxHandler : IRequestHandler<CreateTaxRequest, CreateTaxResul
         entity.Description = request.Description;
         entity.MainCode = request.MainCode;
         entity.SubCode = request.SubCode;
-        entity.TaxType = request.TaxType;
+        //entity.TaxType = request.TaxType;
+        entity.TaxCategoryId = request.TaxCategoryId;
 
         await _repository.CreateAsync(entity, cancellationToken);
         await _unitOfWork.SaveAsync(cancellationToken);

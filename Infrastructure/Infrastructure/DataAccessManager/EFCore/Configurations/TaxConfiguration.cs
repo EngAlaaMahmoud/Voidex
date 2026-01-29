@@ -1,5 +1,6 @@
 ﻿using Domain.Entities;
 using Infrastructure.DataAccessManager.EFCore.Common;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using static Domain.Common.Constants;
 
@@ -17,7 +18,10 @@ public class TaxConfiguration : BaseEntityConfiguration<Tax>
         builder.Property(x => x.MainCode).HasMaxLength(CodeConsts.MaxLength).IsRequired(false);
         builder.Property(x => x.SubCode).HasMaxLength(CodeConsts.MaxLength).IsRequired(false);
         builder.Property(x => x.TaxType).HasMaxLength(NameConsts.MaxLength).IsRequired(false);
-
+        builder.HasOne(t => t.TaxCategory)
+            .WithMany(c => c.Taxes)
+            .HasForeignKey(t => t.TaxCategoryId)
+            .OnDelete(DeleteBehavior.SetNull);
         builder.HasIndex(e => e.MainCode);
         builder.HasIndex(e => e.SubCode);
     }

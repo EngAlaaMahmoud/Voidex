@@ -37,6 +37,8 @@ public class DataContext : IdentityDbContext<ApplicationUser>, IEntityDbSet
     public DbSet<CustomerContact> CustomerContact { get; set; }
     public DbSet<VendorContact> VendorContact { get; set; }
     public DbSet<Tax> Tax { get; set; }
+    public DbSet<TaxCategory> TaxCategory { get; set; }
+    public DbSet<ProductTax> ProductTaxes { get; set; }
     public DbSet<Vat> Vats { get; set; }
 
     public DbSet<SalesOrder> SalesOrder { get; set; }
@@ -88,6 +90,8 @@ public class DataContext : IdentityDbContext<ApplicationUser>, IEntityDbSet
         modelBuilder.ApplyConfiguration(new CustomerContactConfiguration());
         modelBuilder.ApplyConfiguration(new VendorContactConfiguration());
         modelBuilder.ApplyConfiguration(new TaxConfiguration());
+        modelBuilder.ApplyConfiguration(new TaxCategoryConfiguration());
+        modelBuilder.ApplyConfiguration(new ProductTaxConfiguration());
         modelBuilder.ApplyConfiguration(new SalesOrderConfiguration());
         modelBuilder.ApplyConfiguration(new SalesOrderTaxesConfiguration());
         modelBuilder.ApplyConfiguration(new PurchaseOrderTaxesConfiguration());

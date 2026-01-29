@@ -30,4 +30,6 @@ public class Product : BaseEntity
     public double? ServiceFee { get; set; }
     public double? AdditionalTax { get; set; }
     public double? AdditionalFee { get; set; }
+    public virtual ICollection<Tax> Taxes { get; set; } = new List<Tax>();
+    public virtual ICollection<ProductTax> ProductTaxes { get; set; } = new List<ProductTax>();
 }
