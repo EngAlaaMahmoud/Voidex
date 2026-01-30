@@ -63,7 +63,6 @@ public class CreateProductValidator : AbstractValidator<CreateProductRequest>
         RuleFor(x => x.Physical).NotEmpty();
         RuleFor(x => x.UnitMeasureId).NotEmpty();
         RuleFor(x => x.ProductGroupId).NotEmpty();
-        RuleFor(x => x.VatId).NotEmpty();
         // Removed TaxId validation
         // RuleFor(x => x.TaxId).NotEmpty();
     }
