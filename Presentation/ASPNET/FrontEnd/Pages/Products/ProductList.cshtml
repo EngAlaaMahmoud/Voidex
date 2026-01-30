@@ -31,56 +31,53 @@
                                         <div class="row mb-2">
                                             <div class="col-md-6">
                                                 <label for="Name">Name</label>
-                        <input ref="nameRef" type="text" v-model="state.name" class="form-control">
+                                                <input ref="nameRef" type="text" v-model="state.name" class="form-control">
                                                 <label class="text-danger">{{ state.errors.name }}</label>
                                             </div>
                                             <div class="col-md-6">
                                                 <label for="Number">Number</label>
-                                                <input ref="numberRef" v-model="state.number" readonly>
+                                                <input ref="numberRef" v-model="state.number" readonly class="form-control" />
                                             </div>
                                         </div>
-                <div class="row mb-2">
-                    <div class="col-md-6">
-                        <label for="Barcode">Barcode</label>
-                        <input ref="barcodeRef" type="text" class="form-control" placeholder="Scan or enter barcode" v-model="state.barcode">
-                    </div>
-                    <!-- Unit Price moved to the inline pricing row below -->
-                </div>
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label for="InternalCode">Internal Code</label>
-                        <input type="text" v-model="state.internalCode" class="form-control" />
-                    </div>
-                    <div class="col-md-4">
-                        <label for="GisEgsCode">GIS / EGS Code</label>
-                        <input type="text" v-model="state.gisEgsCode" class="form-control" />
-                    </div>
-                    <!-- Company Name removed from product modal -->
-                </div>
-                <div class="row mb-3">
-                    <div class="col-md-4">
-                        <label for="Model">Model / الوصف</label>
-                        <textarea v-model="state.model" id="Model" name="Model" class="form-control" rows="3" style="width:100%"></textarea>
-                    </div>
-                    <div class="col-md-8">
-                        <div class="row g-2 align-items-end">
-                            <div class="col-4">
-                                <label for="UnitPrice">Unit Price</label>
-                                <input ref="unitPriceRef" class="form-control form-control-sm" v-model="state.unitPrice" />
-                                <label class="text-danger small">{{ state.errors.unitPrice }}</label>
-                            </div>
-                            <div class="col-4">
-                                <label for="Discount">Discount</label>
-                                <input ref="discountInputRef" class="form-control form-control-sm" v-model.number="state.discount" />
-                            </div>
-                            <div class="col-4">
-                                <label for="PriceAfterDiscount">Price After Discount</label>
-                                <input ref="priceAfterDiscountRefInput" class="form-control form-control-sm" v-model="state.priceAfterDiscount" readonly />
-                            </div>
-                        </div>
-                        <!-- Service Fee / Additional Tax / Additional Fee removed -->
-                    </div>
-                </div>
+                                        <div class="row mb-2">
+                                            <div class="col-md-6">
+                                                <label for="Barcode">Barcode</label>
+                                                <input ref="barcodeRef" type="text" class="form-control" placeholder="Scan or enter barcode" v-model="state.barcode">
+                                            </div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-md-4">
+                                                <label for="InternalCode">Internal Code</label>
+                                                <input type="text" v-model="state.internalCode" class="form-control" />
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label for="GisEgsCode">GIS / EGS Code</label>
+                                                <input type="text" v-model="state.gisEgsCode" class="form-control" />
+                                            </div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col-md-4">
+                                                <label for="Model">Model / الوصف</label>
+                                                <textarea v-model="state.model" id="Model" name="Model" class="form-control" rows="3" style="width:100%"></textarea>
+                                            </div>
+                                            <div class="col-md-8">
+                                                <div class="row g-2 align-items-end">
+                                                    <div class="col-4">
+                                                        <label for="UnitPrice">Unit Price</label>
+                                                        <input ref="unitPriceRef" class="form-control form-control-sm" v-model="state.unitPrice" />
+                                                        <label class="text-danger small">{{ state.errors.unitPrice }}</label>
+                                                    </div>
+                                                    <div class="col-4">
+                                                        <label for="Discount">Discount</label>
+                                                        <input ref="discountInputRef" class="form-control form-control-sm" v-model.number="state.discount" />
+                                                    </div>
+                                                    <div class="col-4">
+                                                        <label for="PriceAfterDiscount">Price After Discount</label>
+                                                        <input ref="priceAfterDiscountRefInput" class="form-control form-control-sm" v-model="state.priceAfterDiscount" readonly />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                         <div class="row mb-2">
                                             <div class="col-md-6">
                                                 <label for="UnitMeasureId">Unit Measure</label>
@@ -90,26 +87,17 @@
                                             <div class="col-md-6">
                                                 <label for="ProductGroupId">Product Group</label>
                                                 <div ref="productGroupIdRef"></div>
-                                            <label for="ProductCompanyId">Company Name</label>
-                                            <div class="d-flex align-items-center">
-                                                <div id="productCompanyPlaceholder"></div>
-                                                <button type="button" id="productCompanyClearBtn" class="btn btn-sm btn-outline-secondary ms-2">Clear</button>
-                                            </div>
+                                                <label for="ProductCompanyId" class="mt-2">Company Name</label>
+                                                <div class="d-flex align-items-center">
+                                                    <div id="productCompanyPlaceholder"></div>
+                                                    <button type="button" id="productCompanyClearBtn" class="btn btn-sm btn-outline-secondary ms-2">Clear</button>
+                                                </div>
                                                 <label class="text-danger">{{ state.errors.productGroupId }}</label>
                                             </div>
                                         </div>
-                                        <div class="row mb-2">
-                                            <div class="col-md-6">
-                                                <label for="VatId">VAT</label>
-                                                <div ref="vatIdRef"></div>
-                                                <label class="text-danger">{{ state.errors.vatId }}</label>
-                                            </div>
-                                           @*  <div class="col-md-6">
-                                                <label for="TaxId">Tax</label>
-                                                <div ref="taxIdRef"></div>
-                                                <label class="text-danger">{{ state.errors.taxId }}</label>
-                                            </div> *@
-                                        </div>
+
+                                        <!-- VAT dropdown removed as requested -->
+
                                         <div class="row mb-2">
                                             <div class="col-md-6">
                                                 <div class="form-check mt-4">

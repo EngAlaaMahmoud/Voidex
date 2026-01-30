@@ -1,4 +1,5 @@
-﻿const App = {
+﻿// (full file replacement)
+const App = {
     setup() {
         const state = Vue.reactive({
             mainData: [],
@@ -6,8 +7,7 @@
             productGroupListLookupData: [],
             unitMeasureListLookupData: [],
             vatListLookupData: [],
-            //taxListLookupData: [],
-            taxListData: [], // ← Add tax list data
+            taxListData: [],
             mainTitle: null,
             id: '',
             name: '',
@@ -25,9 +25,7 @@
             vatId: null,
             productCompanyId: null,
             productCompanyMap: {},
-            //taxId: null,
             physical: false,
-            // New: Product taxes array
             productTaxes: [],
             errors: {
                 name: '',
@@ -35,7 +33,6 @@
                 productGroupId: '',
                 unitMeasureId: '',
                 vatId: '',
-                //taxId: ''
             },
             isSubmitting: false
         });
@@ -44,31 +41,25 @@
         const mainModalRef = Vue.ref(null);
         const productGroupIdRef = Vue.ref(null);
         const unitMeasureIdRef = Vue.ref(null);
-        const vatIdRef = Vue.ref(null);
-        //const taxIdRef = Vue.ref(null);
         const nameRef = Vue.ref(null);
         const numberRef = Vue.ref(null);
         const barcodeRef = Vue.ref(null);
         const unitPriceRef = Vue.ref(null);
 
-
-        // Add this new function to format currency
         const formatCurrency = (value) => {
-            if (!value) return '0.00';
-            return parseFloat(value).toLocaleString('en-US', {
+            if (!value && value !== 0) return '0.00';
+            return parseFloat(value || 0).toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2
             });
         };
 
-        // Add this new function to get unique main codes from tax list
         const getUniqueMainCodes = () => {
             if (!state.taxListData || !state.taxListData.length) return [];
             const mainCodes = [...new Set(state.taxListData.map(tax => tax.mainCode))];
-            return mainCodes.filter(code => code); // Remove empty/null
+            return mainCodes.filter(code => code);
         };
 
-        // Add this new function to get sub codes by main code
         const getSubCodesByMainCode = (mainCode) => {
             if (!mainCode || !state.taxListData || !state.taxListData.length) return [];
             return state.taxListData
@@ -77,11 +68,11 @@
                     code: tax.subCode,
                     description: tax.description || tax.taxCategoryName,
                     percentage: tax.percentage,
-                    taxCategoryName: tax.taxCategoryName
+                    taxCategoryName: tax.taxCategoryName,
+                    id: tax.id
                 }));
         };
 
-        // Add this new function to add a tax row
         const addTaxRow = () => {
             state.productTaxes.push({
                 id: null,
@@ -90,17 +81,15 @@
                 taxCategoryName: '',
                 percentage: 0,
                 taxValue: 0,
-                taxId: null // Store the tax ID for backend
+                taxId: null
             });
         };
 
-        // Add this new function to remove a tax row
         const removeTaxRow = (index) => {
             state.productTaxes.splice(index, 1);
             calculateTaxValues();
         };
 
-        // Add this new function to handle main code change
         const onTaxMainCodeChange = (index) => {
             const taxRow = state.productTaxes[index];
             taxRow.taxSubCode = '';
@@ -110,7 +99,6 @@
             taxRow.taxId = null;
         };
 
-        // Add this new function to handle sub code change
         const onTaxSubCodeChange = (index) => {
             const taxRow = state.productTaxes[index];
             const mainCode = taxRow.taxMainCode;
@@ -124,54 +112,47 @@
                 if (tax) {
                     taxRow.taxCategoryName = tax.taxCategoryName || tax.taxType || '';
                     taxRow.percentage = tax.percentage || 0;
-                    taxRow.taxId = tax.id; // Store the tax ID
+                    taxRow.taxId = tax.id;
                     calculateTaxValue(index);
                 }
             }
         };
 
-        // Add this new function to calculate tax value for a row
         const calculateTaxValue = (index) => {
             const taxRow = state.productTaxes[index];
-            const basePrice = state.priceAfterDiscount > 0 ? state.priceAfterDiscount : state.unitPrice;
+            const basePrice = (state.priceAfterDiscount && Number(state.priceAfterDiscount) > 0) ? Number(state.priceAfterDiscount) : Number(state.unitPrice || 0);
             const percentage = parseFloat(taxRow.percentage) || 0;
 
             if (basePrice > 0 && percentage > 0) {
                 taxRow.taxValue = (basePrice * percentage) / 100;
             } else {
-                taxRow.taxValue = 0;
+                taxRow.taxValue = Number(taxRow.taxValue || 0);
             }
         };
 
-        // Add this new function to calculate all tax values
         const calculateTaxValues = () => {
             state.productTaxes.forEach((taxRow, index) => {
                 calculateTaxValue(index);
             });
         };
 
-        // Add this new function to calculate total tax percentage
         const calculateTotalTaxPercentage = () => {
             return state.productTaxes.reduce((total, tax) => {
                 return total + (parseFloat(tax.percentage) || 0);
             }, 0);
         };
 
-        // Add this new function to calculate total tax value
         const calculateTotalTaxValue = () => {
             return state.productTaxes.reduce((total, tax) => {
                 return total + (parseFloat(tax.taxValue) || 0);
             }, 0);
         };
 
-        // Add this new function to calculate price after taxes
         const calculatePriceAfterTaxes = () => {
             const basePrice = state.priceAfterDiscount > 0 ? state.priceAfterDiscount : state.unitPrice;
             return basePrice + calculateTotalTaxValue();
         };
 
-
-        // Define mainModal FIRST to ensure it's available everywhere
         const mainModal = {
             obj: null,
             create: () => {
@@ -180,29 +161,16 @@
                         backdrop: 'static',
                         keyboard: false
                     });
-                    console.log('Modal created successfully');
-                } else {
-                    console.error('Modal element not found');
                 }
             },
             show: () => {
-                if (mainModal.obj) {
-                    mainModal.obj.show();
-                } else {
-                    console.error('Modal object is null');
-                }
+                if (mainModal.obj) mainModal.obj.show();
             },
             hide: () => {
-                if (mainModal.obj) {
-                    mainModal.obj.hide();
-                }
+                if (mainModal.obj) mainModal.obj.hide();
             }
         };
 
-        // ensure refs for discount and priceAfterDiscount targets
-        // (these are created in DOM with ref attributes inside template)
-
-        // Define lookup objects
         const productGroupListLookup = {
             obj: null,
             create: () => {
@@ -214,14 +182,16 @@
                         popupHeight: '200px',
                         change: (e) => {
                             state.productGroupId = e.value;
-                            console.log('productGroup changed to', e.value);
-                            // populate product companies from local map (no network)
-                            methods.populateProductCompaniesFromMap(e.value);
+                            if (methods && typeof methods.populateProductCompaniesFromMap === 'function') {
+                                methods.populateProductCompaniesFromMap(e.value);
+                            } else if (methods && typeof methods.populateProductCompaniesByGroup === 'function') {
+                                methods.populateProductCompaniesByGroup(e.value);
+                            } else {
+                                console.warn('No product company population method available');
+                            }
                         }
                     });
                     productGroupListLookup.obj.appendTo(productGroupIdRef.value);
-                } else {
-                    console.warn('ProductGroup list lookup data is not available or invalid.');
                 }
             },
             refresh: () => {
@@ -231,15 +201,12 @@
             },
         };
 
-        // product company lookup for selected group
         const productCompanyLookup = {
             obj: null,
             create: (dataSource) => {
-                // destroy existing first
                 productCompanyLookup.destroy();
                 const elem = document.getElementById('productCompanyPlaceholder');
                 if (!elem) return;
-                // create a fresh input element inside placeholder
                 elem.innerHTML = '<input id="productCompanyElem" />';
                 const list = Array.isArray(dataSource) ? dataSource : [];
                 productCompanyLookup.obj = new ej.dropdowns.DropDownList({
@@ -247,19 +214,17 @@
                     fields: { value: 'id', text: 'name' },
                     placeholder: 'Select Product Company',
                     popupHeight: '200px',
-                    enabled: list.length > 0,
+                    enabled: true,
                     change: (e) => {
                         state.productCompanyId = e.value;
                     }
                 });
                 productCompanyLookup.obj.appendTo(document.getElementById('productCompanyElem'));
-                // set initial value from state
                 try { productCompanyLookup.obj.value = state.productCompanyId; } catch (err) { }
-                // attach clear button
                 const clearBtn = document.getElementById('productCompanyClearBtn');
                 if (clearBtn) {
                     clearBtn.onclick = () => {
-                        try { productCompanyLookup.obj.value = null; } catch {}
+                        try { productCompanyLookup.obj.value = null; } catch { }
                         state.productCompanyId = null;
                     };
                 }
@@ -268,8 +233,7 @@
                 if (productCompanyLookup.obj) {
                     try { productCompanyLookup.obj.value = state.productCompanyId; } catch (err) { }
                 }
-            }
-            ,
+            },
             destroy: () => {
                 if (productCompanyLookup.obj) {
                     try { productCompanyLookup.obj.destroy(); } catch (err) { }
@@ -294,8 +258,6 @@
                         }
                     });
                     unitMeasureListLookup.obj.appendTo(unitMeasureIdRef.value);
-                } else {
-                    console.warn('UnitMeasure list lookup data is not available or invalid.');
                 }
             },
             refresh: () => {
@@ -304,80 +266,6 @@
                 }
             },
         };
-
-        const vatListLookup = {
-            obj: null,
-            create: () => {
-                if (state.vatListLookupData && Array.isArray(state.vatListLookupData) && state.vatListLookupData.length > 0) {
-                    vatListLookup.obj = new ej.dropdowns.DropDownList({
-                        dataSource: state.vatListLookupData,
-                        fields: { value: 'id', text: 'name' },
-                        placeholder: 'Select a VAT',
-                        popupHeight: '200px',
-                        change: (e) => {
-                            state.vatId = e.value;
-                        }
-                    });
-                    vatListLookup.obj.appendTo(vatIdRef.value);
-                } else {
-                    console.warn('VAT list lookup data is not available or invalid.');
-                    // Create empty dropdown as fallback
-                    vatListLookup.obj = new ej.dropdowns.DropDownList({
-                        dataSource: [],
-                        fields: { value: 'id', text: 'name' },
-                        placeholder: 'No VAT data available',
-                        popupHeight: '200px',
-                        enabled: false,
-                        change: (e) => {
-                            state.vatId = e.value;
-                        }
-                    });
-                    vatListLookup.obj.appendTo(vatIdRef.value);
-                }
-            },
-            refresh: () => {
-                if (vatListLookup.obj) {
-                    vatListLookup.obj.value = state.vatId;
-                }
-            },
-        };
-
-        //const taxListLookup = {
-        //    obj: null,
-        //    create: () => {
-        //        if (state.taxListLookupData && Array.isArray(state.taxListLookupData) && state.taxListLookupData.length > 0) {
-        //            taxListLookup.obj = new ej.dropdowns.DropDownList({
-        //                dataSource: state.taxListLookupData,
-        //                fields: { value: 'id', text: 'name' },
-        //                placeholder: 'Select a Tax',
-        //                popupHeight: '200px',
-        //                change: (e) => {
-        //                    state.taxId = e.value;
-        //                }
-        //            });
-        //            taxListLookup.obj.appendTo(taxIdRef.value);
-        //        } else {
-        //            console.warn('Tax list lookup data is not available or invalid.');
-        //            // Create empty dropdown as fallback
-        //            taxListLookup.obj = new ej.dropdowns.DropDownList({
-        //                dataSource: [],
-        //                fields: { value: 'id', text: 'name' },
-        //                placeholder: 'No Tax data available',
-        //                popupHeight: '200px',
-        //                enabled: false,
-        //                change: (e) => {
-        //                    state.taxId = e.value;
-        //                }
-        //            });
-        //            taxListLookup.obj.appendTo(taxIdRef.value);
-        //        }
-        //    },
-        //    refresh: () => {
-        //        if (taxListLookup.obj) {
-        //            taxListLookup.obj.value = state.taxId;
-        //        }
-        //    },
-        //};
 
         const nameText = {
             obj: null,
@@ -425,7 +313,6 @@
             }
         };
 
-
         const unitPriceNumber = {
             obj: null,
             create: () => {
@@ -435,7 +322,6 @@
                     format: 'N2',
                     min: 0
                 });
-                // append to input element
                 const el = unitPriceRef.value;
                 if (el) unitPriceNumber.obj.appendTo(el);
             },
@@ -445,8 +331,6 @@
                 }
             }
         };
-
-        // use simple inputs for discount and price after discount (no extra widgets)
 
         const calculatePriceAfterDiscount = () => {
             const p = Number(state.unitPrice) || 0;
@@ -460,7 +344,6 @@
             state.errors.productGroupId = '';
             state.errors.unitMeasureId = '';
             state.errors.vatId = '';
-            //state.errors.taxId = '';
 
             let isValid = true;
 
@@ -468,7 +351,7 @@
                 state.errors.name = 'Name is required.';
                 isValid = false;
             }
-            if (!state.unitPrice) {
+            if (state.unitPrice === null || state.unitPrice === undefined || state.unitPrice === '') {
                 state.errors.unitPrice = 'Unit price is required.';
                 isValid = false;
             }
@@ -484,7 +367,6 @@
             return isValid;
         };
 
-        // Update resetFormState to clear taxes
         const resetFormState = () => {
             state.id = '';
             state.name = '';
@@ -497,7 +379,9 @@
             state.unitMeasureId = null;
             state.vatId = null;
             state.physical = true;
-            state.productTaxes = []; // Clear taxes
+            state.productTaxes = [];
+            state.discount = 0;
+            state.priceAfterDiscount = 0;
             state.errors = {
                 name: '',
                 unitPrice: '',
@@ -536,7 +420,7 @@
                         model: state.model,
                         discount: state.discount,
                         priceAfterDiscount: state.priceAfterDiscount,
-                        productTaxes: productTaxes // Send tax array
+                        productTaxes: productTaxes
                     });
                     return response;
                 } catch (error) {
@@ -565,7 +449,7 @@
                         model: state.model,
                         discount: state.discount,
                         priceAfterDiscount: state.priceAfterDiscount,
-                        productTaxes: productTaxes // Send tax array
+                        productTaxes: productTaxes
                     });
                     return response;
                 } catch (error) {
@@ -606,23 +490,6 @@
                     throw error;
                 }
             },
-            getVatListLookupData: async () => {
-                try {
-                    const response = await AxiosManager.get('/Vat/GetVatList', {});
-                    return response;
-                } catch (error) {
-                    throw error;
-                }
-            },
-            //getTaxListLookupData: async () => {
-            //    try {
-            //        const response = await AxiosManager.get('/Tax/GetTaxList', {});
-            //        return response;
-            //    } catch (error) {
-            //        throw error;
-            //    }
-            //}
-
             getTaxListData: async () => {
                 try {
                     const response = await AxiosManager.get('/Tax/GetTaxList', {});
@@ -638,31 +505,35 @@
             populateProductGroupListLookupData: async () => {
                 const response = await services.getProductGroupListLookupData();
                 state.productGroupListLookupData = response?.data?.content?.data;
-                // also clear product company selection
                 state.productCompanyId = null;
             },
             populateUnitMeasureListLookupData: async () => {
                 const response = await services.getUnitMeasureListLookupData();
                 state.unitMeasureListLookupData = response?.data?.content?.data;
             },
-            populateVatListLookupData: async () => {
-                const response = await services.getVatListLookupData();
-                state.vatListLookupData = response?.data?.content?.data;
+
+            populateProductCompaniesFromMap: async (groupId) => {
+                if (!groupId) return;
+                const mapping = state.productCompanyMap || {};
+                const items = mapping[groupId] || [];
+                if ((!items || !items.length) && Array.isArray(state.productGroupListLookupData)) {
+                    const grp = state.productGroupListLookupData.find(g => g.id === groupId);
+                    if (grp && Array.isArray(grp.companyIds) && grp.companyIds.length) {
+                        const names = (grp.companyNames || '').split(',').map(s => s.trim()).filter(s => s.length);
+                        productCompanyLookup.create(grp.companyIds.map((id, idx) => ({ id, name: names[idx] ?? '' })));
+                        return;
+                    }
+                }
+                productCompanyLookup.create(items);
             },
 
             populateProductCompaniesByGroup: async (groupId) => {
                 if (!groupId) return;
                 try {
                     const resp = await services.getProductCompaniesByGroup(groupId);
-                    console.log('GetProductCompaniesByGroup response', resp);
                     const items = resp?.data?.content?.data ?? [];
-                    if (!items || !items.length) {
-                        console.warn('No product companies returned for group', groupId, items);
-                    }
-                    // render dropdown placeholder
                     const placeholder = document.getElementById('productCompanyPlaceholder');
                     if (placeholder) placeholder.innerHTML = '';
-                    // fallback: if API returned empty, try to build items from loaded productGroupListLookupData (companyIds + companyNames)
                     let finalItems = items;
                     if ((!finalItems || !finalItems.length) && Array.isArray(state.productGroupListLookupData)) {
                         const grp = state.productGroupListLookupData.find(g => g.id === groupId);
@@ -671,12 +542,12 @@
                             finalItems = grp.companyIds.map((id, idx) => ({ id, name: names[idx] ?? '' }));
                         }
                     }
-
                     productCompanyLookup.create(finalItems || []);
                 } catch (err) {
                     console.error('failed loading product companies for group', err);
                 }
             },
+
             populateTaxListData: async () => {
                 try {
                     const response = await services.getTaxListData();
@@ -688,42 +559,48 @@
                 }
             },
 
-
-            populateProductCompaniesFromMap: async (groupId) => {
-                if (!groupId) return;
-                const mapping = state.productCompanyMap || {};
-                const items = mapping[groupId] || [];
-                if (!items || !items.length) {
-                    // try to build from productGroupListLookupData
-                    const grp = state.productGroupListLookupData.find(g => g.id === groupId);
-                    if (grp && Array.isArray(grp.companyIds) && grp.companyIds.length) {
-                        const names = (grp.companyNames || '').split(',').map(s => s.trim()).filter(s => s.length);
-                        productCompanyLookup.create(grp.companyIds.map((id, idx) => ({ id, name: names[idx] ?? '' })));
-                        return;
-                    }
-                }
-                productCompanyLookup.create(items);
-            },
-            //populateTaxListLookupData: async () => {
-            //    const response = await services.getTaxListLookupData();
-            //    state.taxListLookupData = response?.data?.content?.data;
-            //},
             populateMainData: async () => {
                 const response = await services.getMainData();
-                state.mainData = response?.data?.content?.data.map(item => ({
-                    ...item,
-                    internalCode: item.internalCode ?? item.InternalCode ?? '',
-                    gisEgsCode: item.gisEgsCode ?? item.GisEgsCode ?? '',
-                    companyName: item.companyName ?? item.CompanyName ?? '',
-                    model: item.model ?? item.Model ?? '',
-                    discount: item.discount ?? item.Discount ?? null,
-                    priceAfterDiscount: item.priceAfterDiscount ?? item.PriceAfterDiscount ?? null,
-                    serviceFee: item.serviceFee ?? item.ServiceFee ?? null,
-                    additionalTax: item.additionalTax ?? item.AdditionalTax ?? null,
-                    additionalFee: item.additionalFee ?? item.AdditionalFee ?? null,
-                    createdAtUtc: new Date(item.createdAtUtc)
-                }));
+                state.mainData = response?.data?.content?.data.map(item => {
+                    const rawTaxes = item.productTaxes || item.ProductTaxes || [];
+                    const normalizedTaxes = Array.isArray(rawTaxes) ? rawTaxes.map(t => ({
+                        taxId: t.taxId ?? t.TaxId ?? null,
+                        taxMainCode: t.mainCode ?? t.MainCode ?? t.taxMainCode ?? '',
+                        taxSubCode: t.subCode ?? t.SubCode ?? t.taxSubCode ?? '',
+                        taxCategoryName: t.taxCategoryName ?? t.TaxCategoryName ?? '',
+                        description: t.description ?? t.Description ?? '',
+                        percentage: Number(t.percentage ?? t.Percentage ?? 0),
+                        taxValue: Number(t.taxValue ?? t.TaxValue ?? 0)
+                    })) : [];
+
+                    const t1Sum = normalizedTaxes
+                        .filter(t => (t.taxMainCode || '').toString().toUpperCase() === 'T1')
+                        .reduce((s, t) => s + (Number(t.taxValue || 0)), 0);
+                    const t2Sum = normalizedTaxes
+                        .filter(t => (t.taxMainCode || '').toString().toUpperCase() === 'T2')
+                        .reduce((s, t) => s + (Number(t.taxValue || 0)), 0);
+
+                    return {
+                        ...item,
+                        internalCode: item.internalCode ?? item.InternalCode ?? '',
+                        gisEgsCode: item.gisEgsCode ?? item.GisEgsCode ?? '',
+                        companyName: item.companyName ?? item.CompanyName ?? '',
+                        model: item.model ?? item.Model ?? '',
+                        discount: item.discount ?? item.Discount ?? null,
+                        priceAfterDiscount: item.priceAfterDiscount ?? item.PriceAfterDiscount ?? null,
+                        serviceFee: item.serviceFee ?? item.ServiceFee ?? null,
+                        additionalTax: item.additionalTax ?? item.AdditionalTax ?? null,
+                        additionalFee: item.additionalFee ?? item.AdditionalFee ?? null,
+                        totalTaxes: item.totalTaxes ?? item.TotalTaxes ?? null,
+                        finalPrice: item.finalPrice ?? item.FinalPrice ?? null,
+                        productTaxes: normalizedTaxes,
+                        t1Tax: t1Sum,
+                        t2Tax: t2Sum,
+                        createdAtUtc: new Date(item.createdAtUtc)
+                    };
+                });
             },
+
             handleFormSubmit: async () => {
                 state.isSubmitting = true;
                 await new Promise(resolve => setTimeout(resolve, 200));
@@ -734,9 +611,8 @@
                 }
 
                 try {
-                    // Prepare product taxes for submission
                     const productTaxes = state.productTaxes
-                        .filter(tax => tax.taxId) // Only include taxes with valid ID
+                        .filter(tax => tax.taxId)
                         .map(tax => ({
                             taxId: tax.taxId,
                             taxValue: tax.taxValue,
@@ -745,8 +621,9 @@
                             percentage: tax.percentage
                         }));
 
-                    const response = state.id === ''
-                        ? await services.createMainData(
+                    let response = null;
+                    if (state.id === '') {
+                        response = await services.createMainData(
                             state.name,
                             state.barcode,
                             state.unitPrice,
@@ -757,33 +634,65 @@
                             state.physical,
                             StorageManager.getUserId(),
                             productTaxes
-                        )
-                        : state.deleteMode
-                            ? await services.deleteMainData(state.id, StorageManager.getUserId())
-                            : await services.updateMainData(
-                                state.id,
-                                state.name,
-                                state.barcode,
-                                state.unitPrice,
-                                state.description,
-                                state.productGroupId,
-                                state.unitMeasureId,
-                                state.vatId,
-                                state.physical,
-                                StorageManager.getUserId(),
-                                productTaxes
-                            );
+                        );
+                    } else if (state.deleteMode) {
+                        response = await services.deleteMainData(state.id, StorageManager.getUserId());
+                    } else {
+                        response = await services.updateMainData(
+                            state.id,
+                            state.name,
+                            state.barcode,
+                            state.unitPrice,
+                            state.description,
+                            state.productGroupId,
+                            state.unitMeasureId,
+                            state.vatId,
+                            state.physical,
+                            StorageManager.getUserId(),
+                            productTaxes
+                        );
+                    }
 
-                    // ... rest of existing handleFormSubmit logic ...
+                    // Check response code and show proper message
+                    const isSuccess = response?.data?.code === 200 || response?.status === 200;
+                    if (isSuccess) {
+                        // on success refresh and close modal
+                        await methods.populateMainData();
+                        if (mainGrid.obj) mainGrid.obj.setProperties({ dataSource: state.mainData });
+                        mainModal.hide();
+
+                        const title = state.deleteMode ? 'Delete Successful' : (state.id === '' ? 'Add Successful' : 'Update Successful');
+                        Swal.fire({
+                            icon: 'success',
+                            title,
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+                    } else {
+                        // show server returned error message
+                        const msg = response?.data?.message ?? 'Please check your data.';
+                        const title = state.deleteMode ? 'Delete Failed' : (state.id === '' ? 'Add Failed' : 'Update Failed');
+                        Swal.fire({
+                            icon: 'error',
+                            title,
+                            text: msg,
+                            confirmButtonText: 'Try Again'
+                        });
+                    }
                 } catch (error) {
-                    // ... error handling ...
+                    console.error('Save error', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'An Error Occurred',
+                        text: error.response?.data?.message ?? error.message ?? 'Please try again.',
+                        confirmButtonText: 'OK'
+                    });
                 } finally {
                     state.isSubmitting = false;
                 }
             }
         };
 
-        
         const handler = {
             handleSubmit: methods.handleFormSubmit
         };
@@ -825,7 +734,9 @@
                         { field: 'discount', headerText: 'Discount', width: 100, format: 'N2' },
                         { field: 'priceAfterDiscount', headerText: 'Price After Disc.', width: 120, format: 'N2' },
 
-                        // Tax columns based on categories
+                        { field: 't1Tax', headerText: 'VAT (T1)', width: 120, format: 'N2' },
+                        { field: 't2Tax', headerText: 'Table Tax (T2) / ضريبة الجدول', width: 150, format: 'N2' },
+
                         { field: 'serviceFee', headerText: 'Service Fee', width: 100, format: 'N2' },
                         { field: 'additionalTax', headerText: 'Additional Tax', width: 100, format: 'N2' },
                         { field: 'additionalFee', headerText: 'Additional Fee', width: 100, format: 'N2' },
@@ -851,7 +762,6 @@
                         mainGrid.obj.toolbarModule.enableItems(['EditCustom', 'DeleteCustom'], false);
                         mainGrid.obj.autoFitColumns(['name', 'number', 'barcode', 'unitPrice', 'productGroupName', 'unitMeasureName', 'vatName', 'physical', 'createdAtUtc']);
                     },
-                    excelExportComplete: () => { },
                     rowSelected: () => {
                         if (mainGrid.obj.getSelectedRecords().length == 1) {
                             mainGrid.obj.toolbarModule.enableItems(['EditCustom', 'DeleteCustom'], true);
@@ -880,7 +790,6 @@
                             state.deleteMode = false;
                             state.mainTitle = 'Add Product';
                             resetFormState();
-                            // ensure any previous product company dropdown is cleared
                             productCompanyLookup.destroy();
                             mainModal.show();
                         }
@@ -894,20 +803,42 @@
                                 state.number = selectedRecord.number ?? '';
                                 state.name = selectedRecord.name ?? '';
                                 state.barcode = selectedRecord.barcode ?? '';
-                                state.unitPrice = selectedRecord.unitPrice ?? '';
+                                state.unitPrice = selectedRecord.unitPrice ?? 0;
+                                state.discount = selectedRecord.discount ?? 0;
+                                state.priceAfterDiscount = (selectedRecord.priceAfterDiscount ?? selectedRecord.PriceAfterDiscount) != null
+                                    ? (selectedRecord.priceAfterDiscount ?? selectedRecord.PriceAfterDiscount)
+                                    : (calculatePriceAfterDiscount());
                                 state.description = selectedRecord.description ?? '';
-                            state.productGroupId = selectedRecord.productGroupId ?? '';
-                            state.productCompanyId = selectedRecord.productCompanyId ?? null;
+                                state.productGroupId = selectedRecord.productGroupId ?? '';
+                                state.productCompanyId = selectedRecord.productCompanyId ?? null;
                                 state.unitMeasureId = selectedRecord.unitMeasureId ?? '';
                                 state.vatId = selectedRecord.vatId ?? '';
-                                //state.taxId = selectedRecord.taxId ?? '';
                                 state.physical = selectedRecord.physical ?? false;
-                                // populate product companies for this group then show modal so dropdown appears with selected value
                                 try {
                                     await methods.populateProductCompaniesByGroup(state.productGroupId);
                                 } catch (e) {
                                     console.error('failed to populate product companies on edit', e);
                                 }
+
+                                try {
+                                    const existingTaxes = selectedRecord.productTaxes || selectedRecord.ProductTaxes || [];
+                                    state.productTaxes = (Array.isArray(existingTaxes) ? existingTaxes.map(t => ({
+                                        id: t.taxId ?? t.TaxId ?? null,
+                                        taxId: t.taxId ?? t.TaxId ?? null,
+                                        taxMainCode: t.mainCode ?? t.MainCode ?? t.taxMainCode ?? '',
+                                        taxSubCode: t.subCode ?? t.SubCode ?? t.taxSubCode ?? '',
+                                        taxCategoryName: t.taxCategoryName ?? t.TaxCategoryName ?? '',
+                                        description: t.description ?? t.Description ?? '',
+                                        percentage: Number(t.percentage ?? t.Percentage ?? 0),
+                                        taxValue: Number(t.taxValue ?? t.TaxValue ?? 0)
+                                    })) : []);
+                                } catch (err) {
+                                    console.error('Failed to populate productTaxes on edit', err);
+                                    state.productTaxes = [];
+                                }
+
+                                calculateTaxValues();
+
                                 mainModal.show();
                             }
                         }
@@ -926,7 +857,6 @@
                                 state.productGroupId = selectedRecord.productGroupId ?? '';
                                 state.unitMeasureId = selectedRecord.unitMeasureId ?? '';
                                 state.vatId = selectedRecord.vatId ?? '';
-                                //state.taxId = selectedRecord.taxId ?? '';
                                 state.physical = selectedRecord.physical ?? false;
                                 mainModal.show();
                             }
@@ -978,7 +908,6 @@
                 if (unitPriceNumber.obj) {
                     unitPriceNumber.refresh();
                 }
-                // Recalculate price after discount and taxes
                 state.priceAfterDiscount = calculatePriceAfterDiscount();
                 calculateTaxValues();
             }
@@ -1012,43 +941,19 @@
             }
         );
 
-        Vue.watch(
-            () => state.vatId,
-            (newVal, oldVal) => {
-                state.errors.vatId = '';
-                if (vatListLookup.obj) {
-                    vatListLookup.refresh();
-                }
-            }
-        );
-
-        //Vue.watch(
-        //    () => state.taxId,
-        //    (newVal, oldVal) => {
-        //        state.errors.taxId = '';
-        //        if (taxListLookup.obj) {
-        //            taxListLookup.refresh();
-        //        }
-        //    }
-        //);
-
         Vue.onMounted(async () => {
             try {
                 await SecurityManager.authorizePage(['Products']);
                 await SecurityManager.validateToken();
 
-                // Initialize modal FIRST before anything else
                 mainModal.create();
 
-                // Load main data and create grid
                 await methods.populateMainData();
                 await mainGrid.create(state.mainData);
 
-                // Load lookup data
                 await methods.populateProductGroupListLookupData();
                 productGroupListLookup.create();
 
-                // Build local productCompanyMap
                 state.productCompanyMap = {};
                 state.productGroupListLookupData.forEach(g => {
                     if (g && Array.isArray(g.companyIds) && g.companyIds.length) {
@@ -1060,19 +965,14 @@
                 await methods.populateUnitMeasureListLookupData();
                 unitMeasureListLookup.create();
 
-                await methods.populateVatListLookupData();
-                vatListLookup.create();
-
-                // Load tax list data
+                // still load tax list for modal tax dropdowns
                 await methods.populateTaxListData();
 
-                // Create form controls
                 nameText.create();
                 numberText.create();
                 barcodeText.create();
                 unitPriceNumber.create();
 
-                // Add modal event listener
                 if (mainModalRef.value) {
                     mainModalRef.value.addEventListener('hidden.bs.modal', () => {
                         resetFormState();
@@ -1092,14 +992,12 @@
             }
         });
 
-
         Vue.onUnmounted(() => {
             if (mainModalRef.value) {
                 mainModalRef.value.removeEventListener('hidden.bs.modal', resetFormState);
             }
-            // destroy numeric widgets
-            try { discountNumber.destroy?.(); } catch {}
-            try { priceAfterDiscountNumber.destroy?.(); } catch {}
+            try { discountNumber.destroy?.(); } catch { }
+            try { priceAfterDiscountNumber.destroy?.(); } catch { }
         });
 
         return {
@@ -1107,15 +1005,12 @@
             mainModalRef,
             productGroupIdRef,
             unitMeasureIdRef,
-            vatIdRef,
-            //taxIdRef,
             nameRef,
             numberRef,
             barcodeRef,
             unitPriceRef,
             state,
             handler,
-
             addTaxRow,
             removeTaxRow,
             onTaxMainCodeChange,
